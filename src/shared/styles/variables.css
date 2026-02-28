@@ -1,0 +1,100 @@
+:root {
+  /* Dark theme (default) */
+  --bg-primary: #0a0a1a;
+  --bg-secondary: #12122a;
+  --bg-tertiary: #1a1a3e;
+  --surface: rgba(255, 255, 255, 0.05);
+  --surface-hover: rgba(255, 255, 255, 0.08);
+  --surface-active: rgba(255, 255, 255, 0.12);
+  --border: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.2);
+
+  --text-primary: #f0f0f5;
+  --text-secondary: #a0a0c0;
+  --text-tertiary: #6a6a8a;
+
+  --accent: #7c5cff;
+  --accent-light: #9d85ff;
+  --accent-dark: #5a3ad4;
+  --accent-gradient: linear-gradient(135deg, #7c5cff, #00c2ff);
+  --accent-glow: rgba(124, 92, 255, 0.3);
+
+  --success: #00d68f;
+  --warning: #ffaa00;
+  --danger: #ff4466;
+  --info: #00c2ff;
+
+  /* Badge colors */
+  --badge-hotel: #7c5cff;
+  --badge-airbnb: #ff5a7e;
+  --badge-campground: #00d68f;
+  --badge-cabin: #ffaa00;
+
+  --badge-breakfast: #ffaa00;
+  --badge-lunch: #00d68f;
+  --badge-dinner: #7c5cff;
+  --badge-snacks: #ff5a7e;
+  --badge-drinks: #00c2ff;
+
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+
+  /* Typography */
+  --font-xs: clamp(0.7rem, 0.65rem + 0.25vw, 0.75rem);
+  --font-sm: clamp(0.8rem, 0.75rem + 0.25vw, 0.875rem);
+  --font-base: clamp(0.9rem, 0.85rem + 0.25vw, 1rem);
+  --font-lg: clamp(1.1rem, 1rem + 0.5vw, 1.25rem);
+  --font-xl: clamp(1.3rem, 1.1rem + 1vw, 1.75rem);
+  --font-2xl: clamp(1.6rem, 1.3rem + 1.5vw, 2.25rem);
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-base: 250ms ease;
+  --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Layout */
+  --tab-bar-height: 64px;
+  --content-max-width: 600px;
+
+  color-scheme: dark;
+}
+
+[data-theme='light'] {
+  --bg-primary: #f0f0f8;
+  --bg-secondary: #e8e8f4;
+  --bg-tertiary: #dddde8;
+  --surface: rgba(255, 255, 255, 0.7);
+  --surface-hover: rgba(255, 255, 255, 0.85);
+  --surface-active: rgba(255, 255, 255, 0.95);
+  --border: rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.15);
+
+  --text-primary: #1a1a2e;
+  --text-secondary: #4a4a6a;
+  --text-tertiary: #8a8aa0;
+
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.15);
+
+  --accent-glow: rgba(124, 92, 255, 0.15);
+
+  color-scheme: light;
+}

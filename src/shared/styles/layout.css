@@ -1,0 +1,114 @@
+#app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  overflow-x: hidden;
+}
+
+.app-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(124, 92, 255, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(0, 194, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, rgba(255, 90, 126, 0.08) 0%, transparent 50%),
+    var(--bg-primary);
+  pointer-events: none;
+}
+
+[data-theme='light'] .app-bg {
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(124, 92, 255, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(0, 194, 255, 0.06) 0%, transparent 50%),
+    var(--bg-primary);
+}
+
+.app-content {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  padding: var(--space-md);
+  padding-bottom: calc(var(--tab-bar-height) + var(--space-lg));
+  max-width: var(--content-max-width);
+  width: 100%;
+  margin: 0 auto;
+}
+
+.view {
+  animation: fadeIn var(--transition-base) ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.view-header {
+  margin-bottom: var(--space-lg);
+}
+
+.view-title {
+  font-size: var(--font-2xl);
+  font-weight: 700;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.fab {
+  position: fixed;
+  bottom: calc(var(--tab-bar-height) + var(--space-md));
+  right: var(--space-md);
+  z-index: 10;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  background: var(--accent-gradient);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-lg), 0 0 20px var(--accent-glow);
+  transition: transform var(--transition-fast);
+}
+
+.fab:active {
+  transform: scale(0.92);
+}
+
+.fab svg {
+  width: 24px;
+  height: 24px;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-2xl) var(--space-md);
+  color: var(--text-tertiary);
+  gap: var(--space-md);
+}
+
+.empty-state svg {
+  width: 64px;
+  height: 64px;
+  opacity: 0.3;
+}
+
+.empty-state p {
+  font-size: var(--font-sm);
+}
+
+@media (min-width: 768px) {
+  .app-content {
+    padding: var(--space-xl);
+    padding-bottom: calc(var(--tab-bar-height) + var(--space-xl));
+  }
+}

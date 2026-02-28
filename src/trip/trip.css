@@ -1,0 +1,84 @@
+.trip-hero {
+  padding: var(--space-lg);
+  margin-bottom: var(--space-md);
+  text-align: center;
+}
+
+.trip-destination {
+  font-size: var(--font-2xl);
+  font-weight: 700;
+  margin-bottom: var(--space-xs);
+}
+
+.trip-destination.empty {
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+
+.trip-dates {
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-sm);
+}
+
+.trip-countdown {
+  display: inline-block;
+  padding: 2px 12px;
+  border-radius: var(--radius-full);
+  font-size: var(--font-xs);
+  font-weight: 600;
+  background: var(--accent-glow);
+  color: var(--accent-light);
+}
+
+.trip-notes {
+  margin-top: var(--space-md);
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.trip-edit-btn {
+  margin-top: var(--space-md);
+}
+
+.bento-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-sm);
+}
+
+.bento-card {
+  padding: var(--space-lg);
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.bento-card:active {
+  transform: scale(0.97);
+}
+
+.bento-icon {
+  width: 32px;
+  height: 32px;
+  margin-bottom: var(--space-sm);
+  color: var(--accent-light);
+}
+
+.bento-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.bento-count {
+  font-size: var(--font-2xl);
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.bento-label {
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+}

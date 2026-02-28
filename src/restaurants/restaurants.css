@@ -1,0 +1,34 @@
+.restaurants-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.restaurant-price {
+  color: var(--success);
+  font-weight: 600;
+  font-size: var(--font-sm);
+}
+
+.restaurant-visited {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-top: var(--space-xs);
+}
+
+.restaurant-visited input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+
+.restaurant-visited label {
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.filter-bar {
+  margin-bottom: var(--space-md);
+}
