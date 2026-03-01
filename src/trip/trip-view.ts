@@ -1,10 +1,13 @@
 import { loadData, saveData } from '../shared/storage.ts';
 import { openModal } from '../shared/components/modal.ts';
 import { icons } from '../shared/utils/icons.ts';
-import { formatDateRange, daysUntil } from '../shared/utils/dates.ts';
+import { formatDate, formatDateRange, formatTime, toDateString, daysUntil } from '../shared/utils/dates.ts';
 import { navigateTo } from '../shared/router.ts';
 import { renderMapHtml, hydrateMapPreviews } from '../shared/utils/maps.ts';
 import { resizeImage, renderPhotoGallery, wirePhotoGallery } from '../shared/utils/photos.ts';
+import type { CalendarEvent } from '../calendar/types.ts';
+import type { Accommodation } from '../accommodations/types.ts';
+import type { Restaurant } from '../restaurants/types.ts';
 import './trip.css';
 
 export function renderTrip(container: HTMLElement): void {
@@ -12,6 +15,18 @@ export function renderTrip(container: HTMLElement): void {
   const dest = data.destination;
   const hasDestination = !!dest.name;
   const photos = dest.photos || [];
+  const today = toDateString(new Date());
+  const upcomingEvents = data.events
+    .filter((e) => (e.endDate || e.date) >= today)
+    .map((e) => ({ type: 'event' as const, sortDate: e.date, item: e }));
+  const upcomingStays = data.accommodations
+    .filter((a) => a.checkOut >= today)
+    .map((a) => ({ type: 'stay' as const, sortDate: a.checkIn, item: a }));
+  const upcomingRestaurants = data.restaurants
+    .filter((r) => r.visitDate && r.visitDate >= today)
+    .map((r) => ({ type: 'restaurant' as const, sortDate: r.visitDate!, item: r }));
+  const upcomingItems = [...upcomingEvents, ...upcomingStays, ...upcomingRestaurants]
+    .sort((a, b) => a.sortDate.localeCompare(b.sortDate));
 
   let countdownHtml = '';
   if (dest.startDate) {
@@ -48,6 +63,75 @@ export function renderTrip(container: HTMLElement): void {
         ${photos.length > 0 ? `<span class="trip-section-count">${photos.length} photo${photos.length !== 1 ? 's' : ''}</span>` : ''}
       </div>
       ${renderPhotoGallery(photos, 'trip')}
+    </div>
+  `;
+
+  const accColors: Record<string, string> = {
+    Hotel: 'var(--badge-hotel)', Airbnb: 'var(--badge-airbnb)',
+    Campground: 'var(--badge-campground)', Cabin: 'var(--badge-cabin)',
+    Other: 'var(--text-tertiary)',
+  };
+  const mealColors: Record<string, string> = {
+    Breakfast: 'var(--badge-breakfast)', Lunch: 'var(--badge-lunch)',
+    Dinner: 'var(--badge-dinner)', Snacks: 'var(--badge-snacks)',
+    Drinks: 'var(--badge-drinks)',
+  };
+  const dateGroups = new Map<string, typeof upcomingItems>();
+  for (const ui of upcomingItems) {
+    if (!dateGroups.has(ui.sortDate)) dateGroups.set(ui.sortDate, []);
+    dateGroups.get(ui.sortDate)!.push(ui);
+  }
+
+  const upcomingHtml = upcomingItems.length === 0 ? '' : `
+    <div class="trip-section">
+      <div class="trip-section-header">
+        <h2 class="trip-section-title">Upcoming</h2>
+        <span class="trip-section-count">${upcomingItems.length} item${upcomingItems.length !== 1 ? 's' : ''}</span>
+      </div>
+      <div class="upcoming-list">
+        ${Array.from(dateGroups.entries()).map(([date, groupItems]) => `
+          <div class="upcoming-date-group">
+            <div class="upcoming-date-label">${formatDate(date)}</div>
+            ${groupItems.map(({ type, item }) => {
+              if (type === 'event') {
+                const ev = item as CalendarEvent;
+                const meta = [ev.time ? formatTime(ev.time) : '', ev.location].filter(Boolean).join(' · ');
+                return `
+                  <div class="upcoming-item glass-card">
+                    <span class="upcoming-icon" style="color:var(--accent-light)">${icons.calendar}</span>
+                    <div class="upcoming-info">
+                      <div class="upcoming-title">${escapeHtml(ev.title)}</div>
+                      ${meta ? `<div class="upcoming-meta">${escapeHtml(meta)}</div>` : ''}
+                    </div>
+                  </div>`;
+              } else if (type === 'stay') {
+                const acc = item as Accommodation;
+                const color = accColors[acc.type] ?? 'var(--text-tertiary)';
+                return `
+                  <div class="upcoming-item glass-card">
+                    <span class="upcoming-icon" style="color:${color}">${icons.bed}</span>
+                    <div class="upcoming-info">
+                      <div class="upcoming-title">${escapeHtml(acc.name)}</div>
+                      <div class="upcoming-meta">${formatDateRange(acc.checkIn, acc.checkOut)} · <span style="color:${color}">${acc.type}</span></div>
+                    </div>
+                  </div>`;
+              } else {
+                const rest = item as Restaurant;
+                const color = mealColors[rest.mealType] ?? 'var(--text-tertiary)';
+                const meta = [rest.mealType, rest.cuisineType].filter(Boolean).join(' · ');
+                return `
+                  <div class="upcoming-item glass-card">
+                    <span class="upcoming-icon" style="color:${color}">${icons.restaurant}</span>
+                    <div class="upcoming-info">
+                      <div class="upcoming-title">${escapeHtml(rest.name)}</div>
+                      ${meta ? `<div class="upcoming-meta">${escapeHtml(meta)}</div>` : ''}
+                    </div>
+                  </div>`;
+              }
+            }).join('')}
+          </div>
+        `).join('')}
+      </div>
     </div>
   `;
 
@@ -88,6 +172,7 @@ export function renderTrip(container: HTMLElement): void {
           <div class="bento-label">Restaurants</div>
         </div>
       </div>
+      ${upcomingHtml}
     </div>
   `;
 
