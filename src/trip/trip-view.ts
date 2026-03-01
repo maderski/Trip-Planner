@@ -1,14 +1,20 @@
 import { loadData, saveData } from '../shared/storage.ts';
 import { openModal } from '../shared/components/modal.ts';
 import { icons } from '../shared/utils/icons.ts';
-import { formatDate, formatDateRange, formatTime, toDateString, daysUntil } from '../shared/utils/dates.ts';
+import { formatDate, formatDateRange, formatTime, isDateInRange, toDateString, daysUntil } from '../shared/utils/dates.ts';
 import { navigateTo } from '../shared/router.ts';
 import { renderMapHtml, hydrateMapPreviews } from '../shared/utils/maps.ts';
 import { resizeImage, renderPhotoGallery, wirePhotoGallery } from '../shared/utils/photos.ts';
+import { renderCalendarGrid } from '../calendar/calendar-grid.ts';
 import type { CalendarEvent } from '../calendar/types.ts';
 import type { Accommodation } from '../accommodations/types.ts';
 import type { Restaurant } from '../restaurants/types.ts';
+import type { TripData } from '../shared/types.ts';
 import './trip.css';
+
+let calYear: number = new Date().getFullYear();
+let calMonth: number = new Date().getMonth();
+let calSelectedDate: string | null = null;
 
 export function renderTrip(container: HTMLElement): void {
   const data = loadData();
@@ -42,7 +48,6 @@ export function renderTrip(container: HTMLElement): void {
     ? `style="background-image: url('${dest.image}');"`
     : '';
 
-  // Map section
   let mapHtml = '';
   if (dest.mapLink) {
     mapHtml = `
@@ -55,7 +60,6 @@ export function renderTrip(container: HTMLElement): void {
     `;
   }
 
-  // Photo gallery section
   const photosHtml = `
     <div class="trip-section">
       <div class="trip-section-header">
@@ -109,25 +113,24 @@ export function renderTrip(container: HTMLElement): void {
                 const color = accColors[acc.type] ?? 'var(--text-tertiary)';
                 return `
                   <div class="upcoming-item glass-card">
-                    <span class="upcoming-icon" style="color:var(--info)">${icons.bed}</span>
+                    <span class="upcoming-icon" style="color:${color}">${icons.bed}</span>
                     <div class="upcoming-info">
                       <div class="upcoming-title">${escapeHtml(acc.name)}</div>
                       <div class="upcoming-meta">${formatDateRange(acc.checkIn, acc.checkOut)} · <span style="color:${color}">${acc.type}</span></div>
                     </div>
                   </div>`;
-              } else {
-                const rest = item as Restaurant;
-                const color = mealColors[rest.mealType] ?? 'var(--text-tertiary)';
-                const meta = [rest.mealType, rest.cuisineType].filter(Boolean).join(' · ');
-                return `
-                  <div class="upcoming-item glass-card">
-                    <span class="upcoming-icon" style="color:${color}">${icons.restaurant}</span>
-                    <div class="upcoming-info">
-                      <div class="upcoming-title">${escapeHtml(rest.name)}</div>
-                      ${meta ? `<div class="upcoming-meta">${escapeHtml(meta)}</div>` : ''}
-                    </div>
-                  </div>`;
               }
+              const rest = item as Restaurant;
+              const color = mealColors[rest.mealType] ?? 'var(--text-tertiary)';
+              const meta = [rest.mealType, rest.cuisineType].filter(Boolean).join(' · ');
+              return `
+                <div class="upcoming-item glass-card">
+                  <span class="upcoming-icon" style="color:${color}">${icons.restaurant}</span>
+                  <div class="upcoming-info">
+                    <div class="upcoming-title">${escapeHtml(rest.name)}</div>
+                    ${meta ? `<div class="upcoming-meta">${escapeHtml(meta)}</div>` : ''}
+                  </div>
+                </div>`;
             }).join('')}
           </div>
         `).join('')}
@@ -135,52 +138,69 @@ export function renderTrip(container: HTMLElement): void {
     </div>
   `;
 
-  container.innerHTML = `
-    <div class="view">
-      <div class="trip-hero glass ${dest.image ? 'has-image' : ''}" ${heroStyle}>
-        ${dest.image ? '<div class="trip-hero-overlay"></div>' : ''}
-        <div class="trip-hero-content">
-          <div class="trip-destination ${!hasDestination ? 'empty' : ''}">
-            ${hasDestination ? escapeHtml(dest.name) : 'Tap to set destination'}
-          </div>
-          ${dest.startDate && dest.endDate ? `<div class="trip-dates">${formatDateRange(dest.startDate, dest.endDate)}</div>` : ''}
-          ${countdownHtml}
-          ${dest.notes ? `<div class="trip-notes">${escapeHtml(dest.notes)}</div>` : ''}
-          <button class="btn btn-secondary trip-edit-btn" id="edit-trip">
-            ${icons.edit} ${hasDestination ? 'Edit Trip' : 'Set Up Trip'}
-          </button>
-        </div>
+  const calendarWidgetHtml = `
+    <div class="trip-calendar-widget glass-card" style="padding: var(--space-md);">
+      <div class="trip-calendar-nav">
+        <button id="trip-cal-prev">${icons.chevronLeft}</button>
+        <span class="trip-calendar-month"></span>
+        <button id="trip-cal-next">${icons.chevronRight}</button>
       </div>
-
-      ${mapHtml}
-      ${photosHtml}
-
-      <div class="bento-grid">
-        <div class="bento-card glass-card" data-nav="calendar">
-          <div class="bento-icon">${icons.calendar}</div>
-          <div class="bento-count">${data.events.length}</div>
-          <div class="bento-label">Events</div>
-        </div>
-        <div class="bento-card glass-card" data-nav="accommodations">
-          <div class="bento-icon">${icons.bed}</div>
-          <div class="bento-count">${data.accommodations.length}</div>
-          <div class="bento-label">Stays</div>
-        </div>
-        <div class="bento-card glass-card" data-nav="restaurants" style="grid-column: span 2;">
-          <div class="bento-icon">${icons.restaurant}</div>
-          <div class="bento-count">${data.restaurants.length}</div>
-          <div class="bento-label">Restaurants</div>
-        </div>
-      </div>
-      ${upcomingHtml}
+      <div id="trip-cal-grid" class="calendar-grid"></div>
+      <div id="trip-day-panel"></div>
     </div>
   `;
 
-  // Hydrate any map placeholders that need geocoding
+  container.innerHTML = `
+    <div class="view">
+      <div class="trip-layout">
+        <div class="trip-col-left">
+          <div class="trip-hero glass ${dest.image ? 'has-image' : ''}" ${heroStyle}>
+            ${dest.image ? '<div class="trip-hero-overlay"></div>' : ''}
+            <div class="trip-hero-content">
+              <div class="trip-destination ${!hasDestination ? 'empty' : ''}">
+                ${hasDestination ? escapeHtml(dest.name) : 'Tap to set destination'}
+              </div>
+              ${dest.startDate && dest.endDate ? `<div class="trip-dates">${formatDateRange(dest.startDate, dest.endDate)}</div>` : ''}
+              ${countdownHtml}
+              ${dest.notes ? `<div class="trip-notes">${escapeHtml(dest.notes)}</div>` : ''}
+              <button class="btn btn-secondary trip-edit-btn" id="edit-trip">
+                ${icons.edit} ${hasDestination ? 'Edit Trip' : 'Set Up Trip'}
+              </button>
+            </div>
+          </div>
+
+          ${mapHtml}
+          ${photosHtml}
+
+          <div class="bento-grid">
+            <div class="bento-card glass-card" data-nav="calendar">
+              <div class="bento-icon">${icons.calendar}</div>
+              <div class="bento-count">${data.events.length}</div>
+              <div class="bento-label">Events</div>
+            </div>
+            <div class="bento-card glass-card" data-nav="accommodations">
+              <div class="bento-icon">${icons.bed}</div>
+              <div class="bento-count">${data.accommodations.length}</div>
+              <div class="bento-label">Stays</div>
+            </div>
+            <div class="bento-card glass-card" data-nav="restaurants" style="grid-column: span 2;">
+              <div class="bento-icon">${icons.restaurant}</div>
+              <div class="bento-count">${data.restaurants.length}</div>
+              <div class="bento-label">Restaurants</div>
+            </div>
+          </div>
+          ${upcomingHtml}
+        </div>
+        <div class="trip-col-right">
+          ${calendarWidgetHtml}
+        </div>
+      </div>
+    </div>
+  `;
+
   void hydrateMapPreviews(container);
 
   container.querySelector('#edit-trip')!.addEventListener('click', () => openTripModal(container));
-
   container.querySelectorAll('.bento-card').forEach((card) => {
     card.addEventListener('click', () => {
       const route = (card as HTMLElement).dataset.nav;
@@ -188,13 +208,125 @@ export function renderTrip(container: HTMLElement): void {
     });
   });
 
-  // Wire photo gallery
+  container.querySelector('#trip-cal-prev')!.addEventListener('click', () => {
+    calMonth--;
+    if (calMonth < 0) { calMonth = 11; calYear--; }
+    renderCalWidget();
+  });
+  container.querySelector('#trip-cal-next')!.addEventListener('click', () => {
+    calMonth++;
+    if (calMonth > 11) { calMonth = 0; calYear++; }
+    renderCalWidget();
+  });
+
+  function renderCalWidget(): void {
+    const d = loadData();
+    const monthLabel = new Date(calYear, calMonth).toLocaleDateString('en-US', {
+      month: 'long', year: 'numeric',
+    });
+    container.querySelector('.trip-calendar-month')!.textContent = monthLabel;
+
+    const eventDates = new Set(d.events.map((e) => e.date));
+    const stayDates = new Set<string>();
+    for (const acc of d.accommodations) {
+      if (!acc.checkIn || !acc.checkOut) continue;
+      let cur = new Date(acc.checkIn + 'T00:00:00');
+      const last = new Date(acc.checkOut + 'T00:00:00');
+      while (cur <= last) {
+        stayDates.add(toDateString(cur));
+        cur.setDate(cur.getDate() + 1);
+      }
+    }
+    const restaurantDates = new Set(d.restaurants.flatMap((r) => r.visitDate ? [r.visitDate] : []));
+
+    renderCalendarGrid(container.querySelector('#trip-cal-grid') as HTMLElement, {
+      year: calYear,
+      month: calMonth,
+      selectedDate: calSelectedDate,
+      tripStart: d.destination.startDate,
+      tripEnd: d.destination.endDate,
+      eventDates,
+      stayDates,
+      restaurantDates,
+      onDayClick: (date) => {
+        calSelectedDate = date;
+        renderCalWidget();
+      },
+    });
+
+    if (calSelectedDate) {
+      renderTripDayPanel(container, d, calSelectedDate);
+    } else {
+      const panel = container.querySelector('#trip-day-panel') as HTMLElement;
+      panel.innerHTML = '';
+    }
+  }
+
+  renderCalWidget();
+
   wirePhotoGallery(container, 'trip', photos, (updatedPhotos) => {
     const d = loadData();
     d.destination.photos = updatedPhotos;
     saveData(d);
     renderTrip(container);
   });
+}
+
+function renderTripDayPanel(container: HTMLElement, data: TripData, date: string): void {
+  const panel = container.querySelector('#trip-day-panel') as HTMLElement;
+  const dayEvents = data.events.filter((e) => isDateInRange(date, e.date, e.endDate || e.date));
+  const dayStays = data.accommodations.filter((a) => a.checkIn && a.checkOut && isDateInRange(date, a.checkIn, a.checkOut));
+  const dayRestaurants = data.restaurants.filter((r) => r.visitDate === date);
+
+  const stayColors: Record<string, string> = {
+    Hotel: 'var(--badge-hotel)',
+    Airbnb: 'var(--badge-airbnb)',
+    Campground: 'var(--badge-campground)',
+    Cabin: 'var(--badge-cabin)',
+    Other: 'var(--text-tertiary)',
+  };
+  const mealColors: Record<string, string> = {
+    Breakfast: 'var(--badge-breakfast)',
+    Lunch: 'var(--badge-lunch)',
+    Dinner: 'var(--badge-dinner)',
+    Snacks: 'var(--badge-snacks)',
+    Drinks: 'var(--badge-drinks)',
+  };
+
+  const items: string[] = [];
+  dayEvents.forEach((ev) => {
+    items.push(`
+      <div class="trip-day-item">
+        <span class="trip-day-item-icon" style="color:var(--accent-light)">${icons.calendar}</span>
+        <span>${escapeHtml(ev.title)}</span>
+      </div>
+    `);
+  });
+  dayStays.forEach((acc) => {
+    const color = stayColors[acc.type] ?? 'var(--text-tertiary)';
+    items.push(`
+      <div class="trip-day-item">
+        <span class="trip-day-item-icon" style="color:${color}">${icons.bed}</span>
+        <span>${escapeHtml(acc.name)}</span>
+      </div>
+    `);
+  });
+  dayRestaurants.forEach((rest) => {
+    const color = mealColors[rest.mealType] ?? 'var(--text-tertiary)';
+    items.push(`
+      <div class="trip-day-item">
+        <span class="trip-day-item-icon" style="color:${color}">${icons.restaurant}</span>
+        <span>${escapeHtml(rest.name)}</span>
+      </div>
+    `);
+  });
+
+  panel.innerHTML = `
+    <div class="trip-day-panel">
+      <div class="trip-day-panel-title">${formatDate(date)}</div>
+      ${items.length > 0 ? items.join('') : `<div class="trip-day-empty">Nothing on ${formatDate(date)}</div>`}
+    </div>
+  `;
 }
 
 // --- Trip edit modal ---

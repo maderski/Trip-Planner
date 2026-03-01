@@ -297,7 +297,93 @@
   color: var(--text-secondary);
 }
 
+.trip-calendar-widget {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+@media (max-width: 1023px) {
+  .trip-calendar-widget {
+    margin-top: var(--space-md);
+  }
+}
+
+.trip-calendar-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) 0;
+}
+
+.trip-calendar-month {
+  font-size: var(--font-base);
+  font-weight: 700;
+}
+
+.trip-calendar-nav button {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+}
+
+.trip-calendar-nav button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.trip-day-panel {
+  margin-top: var(--space-sm);
+}
+
+.trip-day-panel-title {
+  font-size: var(--font-xs);
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-xs);
+  padding: 0 var(--space-xs);
+}
+
+.trip-day-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-sm);
+}
+
+.trip-day-item-icon {
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.trip-day-item-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.trip-day-empty {
+  font-size: var(--font-sm);
+  color: var(--text-tertiary);
+  padding: var(--space-xs) var(--space-xs);
+}
+
 @media (min-width: 1024px) {
+  .trip-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: var(--space-xl);
+    align-items: start;
+  }
   .trip-hero.has-image {
     min-height: 380px;
   }

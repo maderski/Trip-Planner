@@ -28,6 +28,7 @@ function startApp(): void {
 }
 
 function renderView(route: Route, container: HTMLElement): void {
+  container.classList.toggle('trip-page', route === 'trip');
   switch (route) {
     case 'trip':
       renderTrip(container);

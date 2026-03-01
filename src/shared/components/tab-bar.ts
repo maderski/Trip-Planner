@@ -4,7 +4,7 @@ import { navigateTo, getCurrentRoute } from '../router.ts';
 
 const tabs: { route: Route; icon: string; label: string }[] = [
   { route: 'trip', icon: icons.trip, label: 'Trip' },
-  { route: 'calendar', icon: icons.calendar, label: 'Calendar' },
+  { route: 'calendar', icon: icons.calendar, label: 'Events' },
   { route: 'accommodations', icon: icons.bed, label: 'Stays' },
   { route: 'restaurants', icon: icons.restaurant, label: 'Food' },
   { route: 'settings', icon: icons.settings, label: 'Settings' },

@@ -185,3 +185,9 @@
   width: 14px;
   height: 14px;
 }
+
+.events-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
