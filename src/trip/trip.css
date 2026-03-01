@@ -293,3 +293,12 @@
   font-size: var(--font-sm);
   color: var(--text-secondary);
 }
+
+@media (min-width: 1024px) {
+  .trip-hero.has-image {
+    min-height: 380px;
+  }
+  .bento-grid {
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+  }
+}

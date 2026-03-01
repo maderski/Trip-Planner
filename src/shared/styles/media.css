@@ -318,3 +318,22 @@
   font-size: var(--font-xs);
   color: var(--text-tertiary);
 }
+
+@media (min-width: 1024px) {
+  .photo-thumb {
+    width: 180px;
+    height: 135px;
+  }
+  .photo-add-btn {
+    width: 90px;
+    height: 135px;
+  }
+  .photo-gallery-inline .photo-thumb {
+    width: 130px;
+    height: 98px;
+  }
+  .photo-gallery-inline .photo-add-btn {
+    width: 65px;
+    height: 98px;
+  }
+}

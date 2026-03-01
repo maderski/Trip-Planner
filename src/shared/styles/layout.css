@@ -112,4 +112,21 @@
     padding: var(--space-xl);
     padding-bottom: calc(var(--tab-bar-height) + var(--space-xl));
   }
+  .view-header {
+    margin: 0 calc(-1 * var(--space-xl));
+    padding: var(--space-xl) var(--space-xl) var(--space-sm);
+  }
+}
+
+@media (min-width: 1024px) {
+  .app-content {
+    margin-left: var(--sidebar-width);
+    max-width: 900px;
+    padding: var(--space-xl) var(--space-2xl);
+    padding-bottom: var(--space-xl);
+  }
+  .view-header {
+    margin: 0;
+    padding: var(--space-lg) 0 var(--space-sm);
+  }
 }

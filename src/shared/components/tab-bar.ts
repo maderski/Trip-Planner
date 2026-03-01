@@ -103,5 +103,40 @@ style.textContent = `
   font-weight: 600;
   letter-spacing: 0.3px;
 }
+
+@media (min-width: 1024px) {
+  .tab-bar {
+    top: 0;
+    right: auto;
+    width: var(--sidebar-width);
+    height: 100dvh;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    padding: var(--space-2xl) var(--space-md) var(--space-lg);
+    gap: var(--space-xs);
+    border-top: none;
+    border-right: 1px solid var(--border);
+  }
+  .tab-item {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
+    min-width: 0;
+  }
+  .tab-item.active {
+    background: var(--surface-active);
+  }
+  .tab-icon {
+    width: 20px;
+    height: 20px;
+  }
+  .tab-label {
+    font-size: var(--font-sm);
+    letter-spacing: 0;
+  }
+}
 `;
 document.head.appendChild(style);

@@ -71,6 +71,7 @@
 
   /* Layout */
   --tab-bar-height: 64px;
+  --sidebar-width: 240px;
   --content-max-width: 600px;
 
   color-scheme: dark;
