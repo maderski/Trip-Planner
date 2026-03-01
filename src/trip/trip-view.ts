@@ -6,6 +6,9 @@ import { navigateTo } from '../shared/router.ts';
 import { renderMapHtml, hydrateMapPreviews } from '../shared/utils/maps.ts';
 import { resizeImage, renderPhotoGallery, wirePhotoGallery } from '../shared/utils/photos.ts';
 import { renderCalendarGrid } from '../calendar/calendar-grid.ts';
+import { openEventModal } from '../calendar/calendar-view.ts';
+import { openAccModal } from '../accommodations/accommodations-view.ts';
+import { openRestModal } from '../restaurants/restaurants-view.ts';
 import type { CalendarEvent } from '../calendar/types.ts';
 import type { Accommodation } from '../accommodations/types.ts';
 import type { Restaurant } from '../restaurants/types.ts';
@@ -101,7 +104,7 @@ export function renderTrip(container: HTMLElement): void {
                 const ev = item as CalendarEvent;
                 const meta = [ev.time ? formatTime(ev.time) : '', ev.location].filter(Boolean).join(' · ');
                 return `
-                  <div class="upcoming-item glass-card">
+                  <div class="upcoming-item glass-card" data-id="${ev.id}" data-type="event">
                     <span class="upcoming-icon" style="color:var(--accent-light)">${icons.calendar}</span>
                     <div class="upcoming-info">
                       <div class="upcoming-title">${escapeHtml(ev.title)}</div>
@@ -112,7 +115,7 @@ export function renderTrip(container: HTMLElement): void {
                 const acc = item as Accommodation;
                 const color = accColors[acc.type] ?? 'var(--text-tertiary)';
                 return `
-                  <div class="upcoming-item glass-card">
+                  <div class="upcoming-item glass-card" data-id="${acc.id}" data-type="stay">
                     <span class="upcoming-icon" style="color:${color}">${icons.bed}</span>
                     <div class="upcoming-info">
                       <div class="upcoming-title">${escapeHtml(acc.name)}</div>
@@ -124,7 +127,7 @@ export function renderTrip(container: HTMLElement): void {
               const color = mealColors[rest.mealType] ?? 'var(--text-tertiary)';
               const meta = [rest.mealType, rest.cuisineType].filter(Boolean).join(' · ');
               return `
-                <div class="upcoming-item glass-card">
+                <div class="upcoming-item glass-card" data-id="${rest.id}" data-type="restaurant">
                   <span class="upcoming-icon" style="color:${color}">${icons.restaurant}</span>
                   <div class="upcoming-info">
                     <div class="upcoming-title">${escapeHtml(rest.name)}</div>
@@ -205,6 +208,22 @@ export function renderTrip(container: HTMLElement): void {
     card.addEventListener('click', () => {
       const route = (card as HTMLElement).dataset.nav;
       if (route) navigateTo(route as 'calendar' | 'accommodations' | 'restaurants');
+    });
+  });
+  container.querySelectorAll('.upcoming-item[data-id]').forEach((el) => {
+    const id = (el as HTMLElement).dataset.id!;
+    const type = (el as HTMLElement).dataset.type!;
+    el.addEventListener('click', () => {
+      if (type === 'event') {
+        const ev = data.events.find((e) => e.id === id);
+        if (ev) openEventModal(container, ev, () => renderTrip(container));
+      } else if (type === 'stay') {
+        const acc = data.accommodations.find((a) => a.id === id);
+        if (acc) openAccModal(container, acc, () => renderTrip(container));
+      } else {
+        const rest = data.restaurants.find((r) => r.id === id);
+        if (rest) openRestModal(container, rest, () => renderTrip(container));
+      }
     });
   });
 

@@ -64,19 +64,32 @@ export function renderCalendar(container: HTMLElement): void {
     return;
   }
 
-  list.innerHTML = events.map((ev) => {
-    const dateLabel = ev.endDate && ev.endDate !== ev.date
-      ? formatDateRange(ev.date, ev.endDate)
-      : formatDate(ev.date);
+  const dateGroups = new Map<string, CalendarEvent[]>();
+  for (const ev of events) {
+    if (!dateGroups.has(ev.date)) dateGroups.set(ev.date, []);
+    dateGroups.get(ev.date)!.push(ev);
+  }
 
-    const photos = ev.photos || [];
-    const mapHtml = ev.mapLink
-      ? `<div class="map-inline">${renderMapHtml(ev.mapLink, icons, true, ev.photos?.[0])}</div>`
-      : '';
-    const photoHtml = `<div class="photo-gallery-inline">${renderPhotoGallery(photos, `event-${ev.id}`)}</div>`;
+  list.innerHTML = '';
+  Array.from(dateGroups.entries()).forEach(([date, groupEvents]) => {
+    const groupEl = document.createElement('div');
+    groupEl.className = 'date-group';
+    groupEl.innerHTML = `<div class="date-group-label">${formatDate(date)}</div>`;
 
-    return `
-      <div class="glass-card item-card calendar-event-card" data-id="${ev.id}">
+    groupEvents.forEach((ev) => {
+      const card = document.createElement('div');
+      const dateLabel = ev.endDate && ev.endDate !== ev.date
+        ? formatDateRange(ev.date, ev.endDate)
+        : formatDate(ev.date);
+      const photos = ev.photos || [];
+      const mapHtml = ev.mapLink
+        ? `<div class="map-inline">${renderMapHtml(ev.mapLink, icons, true, ev.photos?.[0])}</div>`
+        : '';
+      const photoHtml = `<div class="photo-gallery-inline">${renderPhotoGallery(photos, `event-${ev.id}`)}</div>`;
+
+      card.className = 'glass-card item-card calendar-event-card';
+      card.dataset.id = ev.id;
+      card.innerHTML = `
         <div class="card-header">
           <div class="card-header-text">
             <div class="card-title-row">
@@ -97,9 +110,12 @@ export function renderCalendar(container: HTMLElement): void {
           ${mapHtml}
           ${photoHtml}
         </div>
-      </div>
-    `;
-  }).join('');
+      `;
+      groupEl.appendChild(card);
+    });
+
+    list.appendChild(groupEl);
+  });
 
   list.querySelectorAll('.edit-event').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -137,7 +153,7 @@ export function renderCalendar(container: HTMLElement): void {
   });
 }
 
-function openEventModal(container: HTMLElement, event: CalendarEvent | null): void {
+export function openEventModal(container: HTMLElement, event: CalendarEvent | null, onSave?: () => void): void {
   const isEdit = !!event;
   openModal(
     isEdit ? 'Edit Event' : 'Add Event',
@@ -193,7 +209,7 @@ function openEventModal(container: HTMLElement, event: CalendarEvent | null): vo
       }
 
       saveData(data);
-      renderCalendar(container);
+      onSave ? onSave() : renderCalendar(container);
     }
   );
 }

@@ -200,6 +200,15 @@
   padding: var(--space-sm) var(--space-md);
 }
 
+.upcoming-item[data-id] {
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.upcoming-item[data-id]:hover {
+  background: var(--surface-hover);
+}
+
 .upcoming-icon {
   display: flex;
   align-items: center;
@@ -380,7 +389,7 @@
 @media (min-width: 1024px) {
   .trip-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 360px;
+    grid-template-columns: minmax(0, 1fr) 400px;
     gap: var(--space-xl);
     align-items: start;
   }

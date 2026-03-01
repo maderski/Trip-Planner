@@ -64,99 +64,119 @@ export function renderRestaurants(container: HTMLElement): void {
       </div>
     `;
   } else {
-    sorted.forEach((rest) => {
-      const photos = rest.photos || [];
-      const card = document.createElement('div');
-      card.className = `glass-card item-card${rest.visited ? ' dimmed' : ''}`;
+    const scheduled = sorted.filter((r) => !!r.visitDate);
+    const unscheduled = sorted.filter((r) => !r.visitDate);
+    const dateGroups = new Map<string, Restaurant[]>();
+    for (const rest of scheduled) {
+      const key = rest.visitDate!;
+      if (!dateGroups.has(key)) dateGroups.set(key, []);
+      dateGroups.get(key)!.push(rest);
+    }
 
-      const badgeColor = mealColors[rest.mealType];
-      const bodyParts: string[] = [];
+    const groups: Array<{ label: string; items: Restaurant[] }> = [];
+    Array.from(dateGroups.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .forEach(([date, items]) => {
+        groups.push({ label: formatDate(date), items });
+      });
+    if (unscheduled.length > 0) {
+      groups.push({ label: 'Unscheduled', items: unscheduled });
+    }
 
-      if (rest.priceRange) {
-        bodyParts.push(`<span class="restaurant-price">${rest.priceRange}</span>`);
-      }
-      if (rest.cuisineType) {
-        bodyParts.push(`<span>${escapeHtml(rest.cuisineType)}</span>`);
-      }
-      if (rest.address) {
-        bodyParts.push(`<div class="card-detail">${icons.mapPin} <a href="https://maps.google.com/?q=${encodeURIComponent(rest.address)}" target="_blank" rel="noopener">${escapeHtml(rest.address)}</a></div>`);
-      }
-      if (rest.menuLink) {
-        bodyParts.push(`<div class="card-detail">${icons.menu} <a href="${escapeAttr(rest.menuLink)}" target="_blank" rel="noopener">Menu</a></div>`);
-      }
-      if (rest.visitDate) {
-        bodyParts.push(`<div class="card-detail">${icons.calendar} <span>${formatDate(rest.visitDate)}</span></div>`);
-      }
-      if (rest.notes) {
-        bodyParts.push(`<div style="margin-top: 4px;">${escapeHtml(rest.notes)}</div>`);
-      }
+    groups.forEach((group) => {
+      const groupEl = document.createElement('div');
+      groupEl.className = 'date-group';
+      groupEl.innerHTML = `<div class="date-group-label">${group.label}</div>`;
 
-      // Map preview
-      const mapHtml = rest.mapLink ? `<div class="map-inline">${renderMapHtml(rest.mapLink, icons, true, rest.photos?.[0])}</div>` : '';
+      group.items.forEach((rest) => {
+        const photos = rest.photos || [];
+        const card = document.createElement('div');
+        card.className = `glass-card item-card${rest.visited ? ' dimmed' : ''}`;
 
-      // Photo gallery
-      const photoHtml = `<div class="photo-gallery-inline">${renderPhotoGallery(photos, `rest-${rest.id}`)}</div>`;
+        const badgeColor = mealColors[rest.mealType];
+        const bodyParts: string[] = [];
 
-      card.innerHTML = `
-        <div class="card-header">
-          <div class="card-header-text">
-            <div class="card-title-row">
-              <h3 class="card-title">${escapeHtml(rest.name)}</h3>
-              <span class="badge" style="background: ${badgeColor}20; color: ${badgeColor}">${rest.mealType}</span>
+        if (rest.priceRange) {
+          bodyParts.push(`<span class="restaurant-price">${rest.priceRange}</span>`);
+        }
+        if (rest.cuisineType) {
+          bodyParts.push(`<span>${escapeHtml(rest.cuisineType)}</span>`);
+        }
+        if (rest.address) {
+          bodyParts.push(`<div class="card-detail">${icons.mapPin} <a href="https://maps.google.com/?q=${encodeURIComponent(rest.address)}" target="_blank" rel="noopener">${escapeHtml(rest.address)}</a></div>`);
+        }
+        if (rest.menuLink) {
+          bodyParts.push(`<div class="card-detail">${icons.menu} <a href="${escapeAttr(rest.menuLink)}" target="_blank" rel="noopener">Menu</a></div>`);
+        }
+        if (rest.visitDate) {
+          bodyParts.push(`<div class="card-detail">${icons.calendar} <span>${formatDate(rest.visitDate)}</span></div>`);
+        }
+        if (rest.notes) {
+          bodyParts.push(`<div style="margin-top: 4px;">${escapeHtml(rest.notes)}</div>`);
+        }
+
+        const mapHtml = rest.mapLink ? `<div class="map-inline">${renderMapHtml(rest.mapLink, icons, true, rest.photos?.[0])}</div>` : '';
+        const photoHtml = `<div class="photo-gallery-inline">${renderPhotoGallery(photos, `rest-${rest.id}`)}</div>`;
+
+        card.innerHTML = `
+          <div class="card-header">
+            <div class="card-header-text">
+              <div class="card-title-row">
+                <h3 class="card-title">${escapeHtml(rest.name)}</h3>
+                <span class="badge" style="background: ${badgeColor}20; color: ${badgeColor}">${rest.mealType}</span>
+              </div>
+            </div>
+            <div class="card-actions">
+              <button class="btn btn-ghost card-action-btn edit-rest" title="Edit"><span>${icons.edit}</span></button>
+              <button class="btn btn-ghost card-action-btn danger delete-rest" title="Delete"><span>${icons.trash}</span></button>
             </div>
           </div>
-          <div class="card-actions">
-            <button class="btn btn-ghost card-action-btn edit-rest" title="Edit"><span>${icons.edit}</span></button>
-            <button class="btn btn-ghost card-action-btn danger delete-rest" title="Delete"><span>${icons.trash}</span></button>
+          <div class="card-body">
+            ${bodyParts.join(' ')}
+            ${mapHtml}
+            ${photoHtml}
+            <div class="restaurant-visited">
+              <input type="checkbox" id="visited-${rest.id}" ${rest.visited ? 'checked' : ''} />
+              <label for="visited-${rest.id}">Visited</label>
+            </div>
           </div>
-        </div>
-        <div class="card-body">
-          ${bodyParts.join(' ')}
-          ${mapHtml}
-          ${photoHtml}
-          <div class="restaurant-visited">
-            <input type="checkbox" id="visited-${rest.id}" ${rest.visited ? 'checked' : ''} />
-            <label for="visited-${rest.id}">Visited</label>
-          </div>
-        </div>
-      `;
+        `;
 
-      // Edit
-      card.querySelector('.edit-rest')!.addEventListener('click', (e) => {
-        e.stopPropagation();
-        openRestModal(container, rest);
+        card.querySelector('.edit-rest')!.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openRestModal(container, rest);
+        });
+
+        card.querySelector('.delete-rest')!.addEventListener('click', (e) => {
+          e.stopPropagation();
+          deleteRest(container, rest.id);
+        });
+
+        const checkbox = card.querySelector<HTMLInputElement>(`#visited-${rest.id}`)!;
+        checkbox.addEventListener('change', () => {
+          const d = loadData();
+          const r = d.restaurants.find((x) => x.id === rest.id);
+          if (r) {
+            r.visited = checkbox.checked;
+            saveData(d);
+            renderRestaurants(container);
+          }
+        });
+
+        groupEl.appendChild(card);
+
+        wirePhotoGallery(card, `rest-${rest.id}`, photos, (updatedPhotos) => {
+          const d = loadData();
+          const target = d.restaurants.find((x) => x.id === rest.id);
+          if (target) {
+            target.photos = updatedPhotos;
+            saveData(d);
+            renderRestaurants(container);
+          }
+        });
       });
 
-      // Delete
-      card.querySelector('.delete-rest')!.addEventListener('click', (e) => {
-        e.stopPropagation();
-        deleteRest(container, rest.id);
-      });
-
-      // Visited toggle
-      const checkbox = card.querySelector<HTMLInputElement>(`#visited-${rest.id}`)!;
-      checkbox.addEventListener('change', () => {
-        const d = loadData();
-        const r = d.restaurants.find((x) => x.id === rest.id);
-        if (r) {
-          r.visited = checkbox.checked;
-          saveData(d);
-          renderRestaurants(container);
-        }
-      });
-
-      list.appendChild(card);
-
-      // Wire photo gallery for this restaurant
-      wirePhotoGallery(card, `rest-${rest.id}`, photos, (updatedPhotos) => {
-        const d = loadData();
-        const target = d.restaurants.find((x) => x.id === rest.id);
-        if (target) {
-          target.photos = updatedPhotos;
-          saveData(d);
-          renderRestaurants(container);
-        }
-      });
+      list.appendChild(groupEl);
     });
   }
 
@@ -166,7 +186,7 @@ export function renderRestaurants(container: HTMLElement): void {
   void hydrateMapPreviews(container);
 }
 
-function openRestModal(container: HTMLElement, rest: Restaurant | null): void {
+export function openRestModal(container: HTMLElement, rest: Restaurant | null, onSave?: () => void): void {
   const isEdit = !!rest;
   const meals: MealType[] = ['Breakfast', 'Lunch', 'Dinner', 'Snacks', 'Drinks'];
   const prices: PriceRange[] = ['$', '$$', '$$$', '$$$$'];
@@ -246,7 +266,7 @@ function openRestModal(container: HTMLElement, rest: Restaurant | null): void {
       }
 
       saveData(data);
-      renderRestaurants(container);
+      onSave ? onSave() : renderRestaurants(container);
     }
   );
 }

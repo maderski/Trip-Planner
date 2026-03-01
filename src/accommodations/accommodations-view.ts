@@ -2,7 +2,7 @@ import { loadData, saveData } from '../shared/storage.ts';
 import { openModal, openConfirmModal } from '../shared/components/modal.ts';
 import { createCard } from '../shared/components/card.ts';
 import { icons } from '../shared/utils/icons.ts';
-import { formatDateRange } from '../shared/utils/dates.ts';
+import { formatDate, formatDateRange } from '../shared/utils/dates.ts';
 import { generateId } from '../shared/utils/id.ts';
 import type { Accommodation, AccommodationType } from './types.ts';
 import './accommodations.css';
@@ -39,41 +39,56 @@ export function renderAccommodations(container: HTMLElement): void {
       </div>
     `;
   } else {
-    sorted.forEach((acc) => {
-      const bodyParts: string[] = [];
-      if (acc.checkIn && acc.checkOut) {
-        bodyParts.push(`<div class="card-detail">${icons.calendar} ${formatDateRange(acc.checkIn, acc.checkOut)}</div>`);
-      }
-      if (acc.address) {
-        bodyParts.push(`<div class="card-detail">${icons.mapPin} <a href="https://maps.google.com/?q=${encodeURIComponent(acc.address)}" target="_blank" rel="noopener">${escapeHtml(acc.address)}</a></div>`);
-      }
-      if (acc.link) {
-        bodyParts.push(`<div class="card-detail">${icons.link} <a href="${escapeAttr(acc.link)}" target="_blank" rel="noopener">Booking Link</a></div>`);
-      }
-      if (acc.confirmationCode) {
-        bodyParts.push(`<div class="card-detail">Conf: <span class="acc-confirm">${escapeHtml(acc.confirmationCode)}</span></div>`);
-      }
-      if (acc.notes) {
-        bodyParts.push(`<div style="margin-top: 4px;">${escapeHtml(acc.notes)}</div>`);
-      }
+    const dateGroups = new Map<string, Accommodation[]>();
+    for (const acc of sorted) {
+      const key = acc.checkIn || '';
+      if (!dateGroups.has(key)) dateGroups.set(key, []);
+      dateGroups.get(key)!.push(acc);
+    }
 
-      const card = createCard({
-        title: acc.name,
-        badge: { label: acc.type, color: typeColors[acc.type] },
-        body: bodyParts.join(''),
-        actions: [
-          { icon: icons.edit, label: 'Edit', onClick: () => openAccModal(container, acc) },
-          { icon: icons.trash, label: 'Delete', danger: true, onClick: () => deleteAcc(container, acc.id) },
-        ],
+    Array.from(dateGroups.entries()).forEach(([checkIn, groupStays]) => {
+      const groupEl = document.createElement('div');
+      groupEl.className = 'date-group';
+      groupEl.innerHTML = `<div class="date-group-label">${checkIn ? formatDate(checkIn) : 'Unscheduled'}</div>`;
+
+      groupStays.forEach((acc) => {
+        const bodyParts: string[] = [];
+        if (acc.checkIn && acc.checkOut) {
+          bodyParts.push(`<div class="card-detail">${icons.calendar} ${formatDateRange(acc.checkIn, acc.checkOut)}</div>`);
+        }
+        if (acc.address) {
+          bodyParts.push(`<div class="card-detail">${icons.mapPin} <a href="https://maps.google.com/?q=${encodeURIComponent(acc.address)}" target="_blank" rel="noopener">${escapeHtml(acc.address)}</a></div>`);
+        }
+        if (acc.link) {
+          bodyParts.push(`<div class="card-detail">${icons.link} <a href="${escapeAttr(acc.link)}" target="_blank" rel="noopener">Booking Link</a></div>`);
+        }
+        if (acc.confirmationCode) {
+          bodyParts.push(`<div class="card-detail">Conf: <span class="acc-confirm">${escapeHtml(acc.confirmationCode)}</span></div>`);
+        }
+        if (acc.notes) {
+          bodyParts.push(`<div style="margin-top: 4px;">${escapeHtml(acc.notes)}</div>`);
+        }
+
+        const card = createCard({
+          title: acc.name,
+          badge: { label: acc.type, color: typeColors[acc.type] },
+          body: bodyParts.join(''),
+          actions: [
+            { icon: icons.edit, label: 'Edit', onClick: () => openAccModal(container, acc) },
+            { icon: icons.trash, label: 'Delete', danger: true, onClick: () => deleteAcc(container, acc.id) },
+          ],
+        });
+        groupEl.appendChild(card);
       });
-      list.appendChild(card);
+
+      list.appendChild(groupEl);
     });
   }
 
   container.querySelector('#add-acc')!.addEventListener('click', () => openAccModal(container, null));
 }
 
-function openAccModal(container: HTMLElement, acc: Accommodation | null): void {
+export function openAccModal(container: HTMLElement, acc: Accommodation | null, onSave?: () => void): void {
   const isEdit = !!acc;
   const types: AccommodationType[] = ['Hotel', 'Airbnb', 'Campground', 'Cabin', 'Other'];
 
@@ -140,7 +155,7 @@ function openAccModal(container: HTMLElement, acc: Accommodation | null): void {
       }
 
       saveData(data);
-      renderAccommodations(container);
+      onSave ? onSave() : renderAccommodations(container);
     }
   );
 }
