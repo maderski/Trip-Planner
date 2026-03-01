@@ -32,7 +32,7 @@ function buildTripSelectorHtml(): string {
           <span class="sidebar-trip-name">${escapeHtml(activeName)}</span>
           <span class="sidebar-trip-chevron">${icons.chevronRight}</span>
         </button>
-        <div class="trip-selector-dropdown sidebar-trip-dropdown glass" id="sidebar-trip-dropdown" hidden>
+        <div class="sidebar-trip-dropdown glass" id="sidebar-trip-dropdown" hidden>
           <ul class="trip-selector-list" role="listbox">
             ${trips.map((trip) => `
               <li class="trip-selector-item${trip.id === activeId ? ' active' : ''}" role="option" data-trip-id="${trip.id}">
@@ -112,8 +112,12 @@ function wireTripSelectorEvents(nav: HTMLElement): void {
 export function createTabBar(): HTMLElement {
   const nav = document.createElement('nav');
   nav.className = 'tab-bar';
+
+  const primaryTabs = tabs.filter((tab) => tab.route !== 'settings');
+  const settingsTab = tabs.find((tab) => tab.route === 'settings');
+
   nav.innerHTML = `
-    ${tabs
+    ${primaryTabs
       .map(
         (tab) => `
       <button class="tab-item${tab.route === getCurrentRoute() ? ' active' : ''}" data-route="${tab.route}">
@@ -123,6 +127,13 @@ export function createTabBar(): HTMLElement {
     `
       )
       .join('')}
+    <div class="sidebar-spacer"></div>
+    ${settingsTab ? `
+      <button class="tab-item${settingsTab.route === getCurrentRoute() ? ' active' : ''}" data-route="${settingsTab.route}">
+        <span class="tab-icon">${settingsTab.icon}</span>
+        <span class="tab-label">${settingsTab.label}</span>
+      </button>
+    ` : ''}
     ${buildTripSelectorHtml()}
   `;
 
@@ -222,6 +233,10 @@ style.textContent = `
   letter-spacing: 0.3px;
 }
 
+.sidebar-spacer {
+  display: none;
+}
+
 @media (min-width: 1024px) {
   .tab-bar {
     top: 0;
@@ -239,7 +254,6 @@ style.textContent = `
 
   .sidebar-trip-selector {
     position: relative;
-    margin-top: auto;
     padding: 0 var(--space-xs);
   }
 
@@ -294,6 +308,7 @@ style.textContent = `
 
   .sidebar-trip-dropdown {
     position: absolute;
+    top: auto;
     bottom: calc(100% + var(--space-xs));
     left: 0;
     right: 0;
@@ -315,7 +330,11 @@ style.textContent = `
     height: 1px;
     background: var(--border);
     margin: var(--space-sm) var(--space-md);
-    margin-top: auto;
+  }
+
+  .sidebar-spacer {
+    display: block;
+    flex: 1;
   }
 
   .tab-item {
