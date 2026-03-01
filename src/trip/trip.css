@@ -163,6 +163,29 @@
   align-items: center;
 }
 
+/* Trip sections */
+.trip-section {
+  margin-bottom: var(--space-md);
+}
+
+.trip-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-sm);
+}
+
+.trip-section-title {
+  font-size: var(--font-base);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.trip-section-count {
+  font-size: var(--font-xs);
+  color: var(--text-tertiary);
+}
+
 /* Bento grid */
 .bento-grid {
   display: grid;

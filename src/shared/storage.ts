@@ -8,7 +8,7 @@ const THEME_KEY = 'trip-planner-theme';
 function defaultData(): TripData {
   return {
     version: 1,
-    destination: { name: '', startDate: '', endDate: '', notes: '', image: '' },
+    destination: { name: '', startDate: '', endDate: '', notes: '', image: '', mapLink: '', photos: [] },
     events: [],
     accommodations: [],
     restaurants: [],

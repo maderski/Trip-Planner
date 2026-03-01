@@ -11,4 +11,6 @@ export interface Restaurant {
   priceRange: PriceRange;
   notes: string;
   visited: boolean;
+  mapLink: string;
+  photos: string[];
 }

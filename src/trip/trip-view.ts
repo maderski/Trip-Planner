@@ -3,12 +3,15 @@ import { openModal } from '../shared/components/modal.ts';
 import { icons } from '../shared/utils/icons.ts';
 import { formatDateRange, daysUntil } from '../shared/utils/dates.ts';
 import { navigateTo } from '../shared/router.ts';
+import { renderMapHtml, hydrateMapPreviews } from '../shared/utils/maps.ts';
+import { resizeImage, renderPhotoGallery, wirePhotoGallery } from '../shared/utils/photos.ts';
 import './trip.css';
 
 export function renderTrip(container: HTMLElement): void {
   const data = loadData();
   const dest = data.destination;
   const hasDestination = !!dest.name;
+  const photos = dest.photos || [];
 
   let countdownHtml = '';
   if (dest.startDate) {
@@ -23,6 +26,30 @@ export function renderTrip(container: HTMLElement): void {
   const heroStyle = dest.image
     ? `style="background-image: url('${dest.image}');"`
     : '';
+
+  // Map section
+  let mapHtml = '';
+  if (dest.mapLink) {
+    mapHtml = `
+      <div class="trip-section">
+        <div class="trip-section-header">
+          <h2 class="trip-section-title">Location</h2>
+        </div>
+        ${renderMapHtml(dest.mapLink, icons, undefined, dest.photos?.[0] ?? dest.image)}
+      </div>
+    `;
+  }
+
+  // Photo gallery section
+  const photosHtml = `
+    <div class="trip-section">
+      <div class="trip-section-header">
+        <h2 class="trip-section-title">Highlights</h2>
+        ${photos.length > 0 ? `<span class="trip-section-count">${photos.length} photo${photos.length !== 1 ? 's' : ''}</span>` : ''}
+      </div>
+      ${renderPhotoGallery(photos, 'trip')}
+    </div>
+  `;
 
   container.innerHTML = `
     <div class="view">
@@ -40,6 +67,9 @@ export function renderTrip(container: HTMLElement): void {
           </button>
         </div>
       </div>
+
+      ${mapHtml}
+      ${photosHtml}
 
       <div class="bento-grid">
         <div class="bento-card glass-card" data-nav="calendar">
@@ -61,6 +91,9 @@ export function renderTrip(container: HTMLElement): void {
     </div>
   `;
 
+  // Hydrate any map placeholders that need geocoding
+  void hydrateMapPreviews(container);
+
   container.querySelector('#edit-trip')!.addEventListener('click', () => openTripModal(container));
 
   container.querySelectorAll('.bento-card').forEach((card) => {
@@ -69,7 +102,17 @@ export function renderTrip(container: HTMLElement): void {
       if (route) navigateTo(route as 'calendar' | 'accommodations' | 'restaurants');
     });
   });
+
+  // Wire photo gallery
+  wirePhotoGallery(container, 'trip', photos, (updatedPhotos) => {
+    const d = loadData();
+    d.destination.photos = updatedPhotos;
+    saveData(d);
+    renderTrip(container);
+  });
 }
+
+// --- Trip edit modal ---
 
 let pendingImage: string | null = null;
 
@@ -111,6 +154,11 @@ function openTripModal(container: HTMLElement): void {
       </div>
     </div>
     <div class="form-group">
+      <label class="form-label">Maps Link</label>
+      <input class="form-input" name="mapLink" value="${escapeAttr(dest.mapLink || '')}" placeholder="Paste a Google Maps share link" />
+      <span class="form-hint">Paste a shared link from Google Maps, Apple Maps, etc.</span>
+    </div>
+    <div class="form-group">
       <label class="form-label">Notes</label>
       <textarea class="form-input" name="notes" placeholder="Travel tips, links, reminders...">${escapeHtml(dest.notes)}</textarea>
     </div>
@@ -123,6 +171,8 @@ function openTripModal(container: HTMLElement): void {
         endDate: fd.get('endDate') as string,
         notes: fd.get('notes') as string,
         image: pendingImage || '',
+        mapLink: fd.get('mapLink') as string,
+        photos: dest.photos || [],
       };
       saveData(data);
       pendingImage = null;
@@ -130,7 +180,6 @@ function openTripModal(container: HTMLElement): void {
     }
   );
 
-  // Wire up image picker after modal is in the DOM
   const fileInput = document.getElementById('image-file') as HTMLInputElement;
   const pickBtn = document.getElementById('pick-image')!;
   const removeBtn = document.getElementById('remove-image')!;
@@ -141,8 +190,6 @@ function openTripModal(container: HTMLElement): void {
   fileInput.addEventListener('change', () => {
     const file = fileInput.files?.[0];
     if (!file) return;
-
-    // Resize to keep localStorage manageable
     resizeImage(file, 800, 600).then((dataUrl) => {
       pendingImage = dataUrl;
       previewContainer.innerHTML = `<img src="${dataUrl}" class="image-preview" />`;
@@ -155,31 +202,6 @@ function openTripModal(container: HTMLElement): void {
     previewContainer.innerHTML = '<div class="image-preview-empty">No image selected</div>';
     removeBtn.style.display = 'none';
     fileInput.value = '';
-  });
-}
-
-function resizeImage(file: File, maxWidth: number, maxHeight: number): Promise<string> {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const img = new Image();
-      img.onload = () => {
-        let { width, height } = img;
-        if (width > maxWidth || height > maxHeight) {
-          const ratio = Math.min(maxWidth / width, maxHeight / height);
-          width = Math.round(width * ratio);
-          height = Math.round(height * ratio);
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d')!;
-        ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', 0.75));
-      };
-      img.src = reader.result as string;
-    };
-    reader.readAsDataURL(file);
   });
 }
 

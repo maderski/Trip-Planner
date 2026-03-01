@@ -4,4 +4,6 @@ export interface Destination {
   endDate: string;
   notes: string;
   image: string;
+  mapLink: string;
+  photos: string[];
 }

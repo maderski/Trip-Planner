@@ -1,8 +1,9 @@
 import { loadData, saveData } from '../shared/storage.ts';
 import { openModal, openConfirmModal } from '../shared/components/modal.ts';
-import { createCard } from '../shared/components/card.ts';
 import { icons } from '../shared/utils/icons.ts';
 import { generateId } from '../shared/utils/id.ts';
+import { renderMapHtml, hydrateMapPreviews } from '../shared/utils/maps.ts';
+import { renderPhotoGallery, wirePhotoGallery } from '../shared/utils/photos.ts';
 import type { Restaurant, MealType, PriceRange } from './types.ts';
 import './restaurants.css';
 
@@ -25,7 +26,6 @@ export function renderRestaurants(container: HTMLElement): void {
     filtered = filtered.filter((r) => r.mealType === activeFilter);
   }
 
-  // Sort: unvisited first, then by name
   const sorted = [...filtered].sort((a, b) => {
     if (a.visited !== b.visited) return a.visited ? 1 : -1;
     return a.name.localeCompare(b.name);
@@ -64,7 +64,13 @@ export function renderRestaurants(container: HTMLElement): void {
     `;
   } else {
     sorted.forEach((rest) => {
+      const photos = rest.photos || [];
+      const card = document.createElement('div');
+      card.className = `glass-card item-card${rest.visited ? ' dimmed' : ''}`;
+
+      const badgeColor = mealColors[rest.mealType];
       const bodyParts: string[] = [];
+
       if (rest.priceRange) {
         bodyParts.push(`<span class="restaurant-price">${rest.priceRange}</span>`);
       }
@@ -81,24 +87,49 @@ export function renderRestaurants(container: HTMLElement): void {
         bodyParts.push(`<div style="margin-top: 4px;">${escapeHtml(rest.notes)}</div>`);
       }
 
-      bodyParts.push(`
-        <div class="restaurant-visited">
-          <input type="checkbox" id="visited-${rest.id}" ${rest.visited ? 'checked' : ''} />
-          <label for="visited-${rest.id}">Visited</label>
-        </div>
-      `);
+      // Map preview
+      const mapHtml = rest.mapLink ? `<div class="map-inline">${renderMapHtml(rest.mapLink, icons, true, rest.photos?.[0])}</div>` : '';
 
-      const card = createCard({
-        title: rest.name,
-        badge: { label: rest.mealType, color: mealColors[rest.mealType] },
-        body: bodyParts.join(' '),
-        dimmed: rest.visited,
-        actions: [
-          { icon: icons.edit, label: 'Edit', onClick: () => openRestModal(container, rest) },
-          { icon: icons.trash, label: 'Delete', danger: true, onClick: () => deleteRest(container, rest.id) },
-        ],
+      // Photo gallery
+      const photoHtml = `<div class="photo-gallery-inline">${renderPhotoGallery(photos, `rest-${rest.id}`)}</div>`;
+
+      card.innerHTML = `
+        <div class="card-header">
+          <div class="card-header-text">
+            <div class="card-title-row">
+              <h3 class="card-title">${escapeHtml(rest.name)}</h3>
+              <span class="badge" style="background: ${badgeColor}20; color: ${badgeColor}">${rest.mealType}</span>
+            </div>
+          </div>
+          <div class="card-actions">
+            <button class="btn btn-ghost card-action-btn edit-rest" title="Edit"><span>${icons.edit}</span></button>
+            <button class="btn btn-ghost card-action-btn danger delete-rest" title="Delete"><span>${icons.trash}</span></button>
+          </div>
+        </div>
+        <div class="card-body">
+          ${bodyParts.join(' ')}
+          ${mapHtml}
+          ${photoHtml}
+          <div class="restaurant-visited">
+            <input type="checkbox" id="visited-${rest.id}" ${rest.visited ? 'checked' : ''} />
+            <label for="visited-${rest.id}">Visited</label>
+          </div>
+        </div>
+      `;
+
+      // Edit
+      card.querySelector('.edit-rest')!.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openRestModal(container, rest);
       });
 
+      // Delete
+      card.querySelector('.delete-rest')!.addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteRest(container, rest.id);
+      });
+
+      // Visited toggle
       const checkbox = card.querySelector<HTMLInputElement>(`#visited-${rest.id}`)!;
       checkbox.addEventListener('change', () => {
         const d = loadData();
@@ -111,10 +142,24 @@ export function renderRestaurants(container: HTMLElement): void {
       });
 
       list.appendChild(card);
+
+      // Wire photo gallery for this restaurant
+      wirePhotoGallery(card, `rest-${rest.id}`, photos, (updatedPhotos) => {
+        const d = loadData();
+        const target = d.restaurants.find((x) => x.id === rest.id);
+        if (target) {
+          target.photos = updatedPhotos;
+          saveData(d);
+          renderRestaurants(container);
+        }
+      });
     });
   }
 
   container.querySelector('#add-rest')!.addEventListener('click', () => openRestModal(container, null));
+
+  // Hydrate any map placeholders that need geocoding
+  void hydrateMapPreviews(container);
 }
 
 function openRestModal(container: HTMLElement, rest: Restaurant | null): void {
@@ -152,6 +197,11 @@ function openRestModal(container: HTMLElement, rest: Restaurant | null): void {
       <input class="form-input" name="address" value="${escapeAttr(rest?.address || '')}" placeholder="123 Main St" />
     </div>
     <div class="form-group">
+      <label class="form-label">Maps Link</label>
+      <input class="form-input" name="mapLink" value="${escapeAttr(rest?.mapLink || '')}" placeholder="Paste a Google Maps share link" />
+      <span class="form-hint">Paste a shared link to show a map preview</span>
+    </div>
+    <div class="form-group">
       <label class="form-label">Website</label>
       <input class="form-input" type="url" name="link" value="${escapeAttr(rest?.link || '')}" placeholder="https://..." />
     </div>
@@ -170,9 +220,11 @@ function openRestModal(container: HTMLElement, rest: Restaurant | null): void {
         priceRange: fd.get('priceRange') as PriceRange,
         cuisineType: fd.get('cuisineType') as string,
         address: fd.get('address') as string,
+        mapLink: fd.get('mapLink') as string,
         link: fd.get('link') as string,
         notes: fd.get('notes') as string,
         visited: rest?.visited || false,
+        photos: rest?.photos || [],
       };
 
       if (isEdit) {

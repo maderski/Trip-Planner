@@ -5,4 +5,6 @@ export interface CalendarEvent {
   title: string;
   description: string;
   location: string;
+  mapLink: string;
+  photos: string[];
 }

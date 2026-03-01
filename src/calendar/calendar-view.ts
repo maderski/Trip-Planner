@@ -3,6 +3,8 @@ import { openModal, openConfirmModal } from '../shared/components/modal.ts';
 import { icons } from '../shared/utils/icons.ts';
 import { formatDate, formatTime } from '../shared/utils/dates.ts';
 import { generateId } from '../shared/utils/id.ts';
+import { renderMapHtml, hydrateMapPreviews } from '../shared/utils/maps.ts';
+import { renderPhotoGallery, wirePhotoGallery } from '../shared/utils/photos.ts';
 import { renderCalendarGrid } from './calendar-grid.ts';
 import type { CalendarEvent } from './types.ts';
 import './calendar.css';
@@ -103,20 +105,31 @@ function renderDayEvents(container: HTMLElement, date: string): void {
     <div class="day-events-header">
       <span class="day-events-title">${formatDate(date)}</span>
     </div>
-    ${dayEvents.map((ev) => `
-      <div class="event-item glass-card" data-id="${ev.id}">
-        ${ev.time ? `<div class="event-time">${formatTime(ev.time)}</div>` : ''}
-        <div class="event-title">${escapeHtml(ev.title)}</div>
-        ${ev.location ? `<div class="event-detail">${icons.mapPin} ${escapeHtml(ev.location)}</div>` : ''}
-        ${ev.description ? `<div class="event-detail">${escapeHtml(ev.description)}</div>` : ''}
-        <div class="event-actions">
-          <button class="edit-event" title="Edit">${icons.edit}</button>
-          <button class="delete-event danger" title="Delete">${icons.trash}</button>
+    ${dayEvents.map((ev) => {
+      const photos = ev.photos || [];
+      const mapHtml = ev.mapLink ? `<div class="map-inline">${renderMapHtml(ev.mapLink, icons, true, ev.photos?.[0])}</div>` : '';
+      const photoHtml = photos.length > 0
+        ? `<div class="photo-gallery-inline">${renderPhotoGallery(photos, `event-${ev.id}`)}</div>`
+        : `<div class="photo-gallery-inline">${renderPhotoGallery([], `event-${ev.id}`)}</div>`;
+
+      return `
+        <div class="event-item glass-card" data-id="${ev.id}">
+          ${ev.time ? `<div class="event-time">${formatTime(ev.time)}</div>` : ''}
+          <div class="event-title">${escapeHtml(ev.title)}</div>
+          ${ev.location ? `<div class="event-detail">${icons.mapPin} ${escapeHtml(ev.location)}</div>` : ''}
+          ${ev.description ? `<div class="event-detail">${escapeHtml(ev.description)}</div>` : ''}
+          ${mapHtml}
+          ${photoHtml}
+          <div class="event-actions">
+            <button class="edit-event" title="Edit">${icons.edit}</button>
+            <button class="delete-event danger" title="Delete">${icons.trash}</button>
+          </div>
         </div>
-      </div>
-    `).join('')}
+      `;
+    }).join('')}
   `;
 
+  // Wire edit/delete
   eventsContainer.querySelectorAll('.edit-event').forEach((btn) => {
     btn.addEventListener('click', () => {
       const id = (btn.closest('.event-item') as HTMLElement).dataset.id!;
@@ -134,6 +147,23 @@ function renderDayEvents(container: HTMLElement, date: string): void {
         saveData(d);
         render(container);
       }, true);
+    });
+  });
+
+  // Hydrate any map placeholders that need geocoding
+  void hydrateMapPreviews(eventsContainer as HTMLElement);
+
+  // Wire photo galleries for each event
+  dayEvents.forEach((ev) => {
+    const photos = ev.photos || [];
+    wirePhotoGallery(eventsContainer as HTMLElement, `event-${ev.id}`, photos, (updatedPhotos) => {
+      const d = loadData();
+      const target = d.events.find((e) => e.id === ev.id);
+      if (target) {
+        target.photos = updatedPhotos;
+        saveData(d);
+        render(container);
+      }
     });
   });
 }
@@ -162,6 +192,11 @@ function openEventModal(container: HTMLElement, event: CalendarEvent | null): vo
       <input class="form-input" name="location" value="${escapeAttr(event?.location || '')}" placeholder="Where?" />
     </div>
     <div class="form-group">
+      <label class="form-label">Maps Link</label>
+      <input class="form-input" name="mapLink" value="${escapeAttr(event?.mapLink || '')}" placeholder="Paste a Google Maps share link" />
+      <span class="form-hint">Paste a shared link to show a map preview</span>
+    </div>
+    <div class="form-group">
       <label class="form-label">Description</label>
       <textarea class="form-input" name="description" placeholder="Details...">${escapeHtml(event?.description || '')}</textarea>
     </div>
@@ -176,7 +211,9 @@ function openEventModal(container: HTMLElement, event: CalendarEvent | null): vo
         date: fd.get('date') as string,
         time: fd.get('time') as string,
         location: fd.get('location') as string,
+        mapLink: fd.get('mapLink') as string,
         description: fd.get('description') as string,
+        photos: event?.photos || [],
       };
 
       if (isEdit) {
