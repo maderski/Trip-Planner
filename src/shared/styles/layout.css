@@ -107,6 +107,68 @@
   font-size: var(--font-sm);
 }
 
+.mobile-trip-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: var(--space-xs) var(--space-md);
+  border-bottom: 1px solid var(--border);
+  z-index: 10;
+}
+
+.mobile-trip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  cursor: pointer;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-full);
+  transition: background var(--transition-fast);
+}
+
+.mobile-trip-btn:hover {
+  background: var(--surface-hover);
+}
+
+.mobile-trip-name {
+  font-size: var(--font-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.mobile-trip-chevron {
+  display: flex;
+  align-items: center;
+  color: var(--text-tertiary);
+  transition: transform var(--transition-fast);
+}
+
+.mobile-trip-btn[aria-expanded='true'] .mobile-trip-chevron {
+  transform: rotate(90deg);
+}
+
+.mobile-trip-chevron svg {
+  width: 14px;
+  height: 14px;
+}
+
+.mobile-trip-dropdown {
+  position: absolute;
+  top: 100%;
+  left: var(--space-md);
+  right: var(--space-md);
+  z-index: 50;
+  min-width: unset;
+  max-width: unset;
+  transform: none;
+  animation: mobileTripDropdownIn var(--transition-fast) ease;
+}
+
+@keyframes mobileTripDropdownIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @media (min-width: 768px) {
   .app-content {
     padding: var(--space-xl);
@@ -119,6 +181,10 @@
 }
 
 @media (min-width: 1024px) {
+  .mobile-trip-header {
+    display: none;
+  }
+
   .app-content {
     margin-left: var(--sidebar-width);
     max-width: 900px;

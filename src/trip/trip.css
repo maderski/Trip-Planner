@@ -68,6 +68,156 @@
   font-style: italic;
 }
 
+.trip-selector-wrap {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: var(--space-xs);
+}
+
+.trip-selector-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  cursor: pointer;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-full);
+  transition: background var(--transition-fast);
+}
+
+.trip-selector-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.trip-selector-name {
+  font-size: var(--font-2xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+
+.trip-selector-name.empty {
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+
+.trip-hero.has-image .trip-selector-name {
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.7), 0 1px 3px rgba(0, 0, 0, 0.5);
+  color: #fff;
+}
+
+.trip-selector-chevron {
+  display: flex;
+  align-items: center;
+  color: var(--text-tertiary);
+  transition: transform var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.trip-hero.has-image .trip-selector-chevron {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.trip-selector-btn[aria-expanded='true'] .trip-selector-chevron {
+  transform: rotate(90deg);
+}
+
+.trip-selector-chevron svg {
+  width: 16px;
+  height: 16px;
+}
+
+.trip-selector-dropdown {
+  position: absolute;
+  top: calc(100% + var(--space-xs));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  min-width: 220px;
+  max-width: 320px;
+  width: max-content;
+  padding: var(--space-xs) 0;
+  animation: dropdownIn var(--transition-fast) ease;
+}
+
+@keyframes dropdownIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.trip-selector-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.trip-selector-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  cursor: pointer;
+  font-size: var(--font-sm);
+  color: var(--text-primary);
+  transition: background var(--transition-fast);
+}
+
+.trip-selector-item:hover {
+  background: var(--surface-hover);
+}
+
+.trip-selector-item.active {
+  color: var(--accent-light);
+}
+
+.trip-selector-item-name {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.trip-selector-item-check {
+  display: flex;
+  align-items: center;
+  color: var(--accent-light);
+}
+
+.trip-selector-item-check svg,
+.trip-selector-new-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.trip-selector-divider {
+  height: 1px;
+  background: var(--border);
+  margin: var(--space-xs) 0;
+}
+
+.trip-selector-new {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--font-sm);
+  color: var(--accent-light);
+  transition: background var(--transition-fast);
+}
+
+.trip-selector-new:hover {
+  background: var(--surface-hover);
+}
+
+.trip-selector-new-icon {
+  display: flex;
+  align-items: center;
+}
+
 .trip-dates {
   font-size: var(--font-sm);
   color: var(--text-secondary);

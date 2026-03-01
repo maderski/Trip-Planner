@@ -10,8 +10,15 @@ export type { Restaurant, MealType, PriceRange } from '../restaurants/types.ts';
 
 export interface TripData {
   version: 1;
+  id: string;
   destination: Destination;
   events: CalendarEvent[];
   accommodations: Accommodation[];
   restaurants: Restaurant[];
+}
+
+export interface AppData {
+  version: 2;
+  trips: TripData[];
+  activeTripId: string;
 }
