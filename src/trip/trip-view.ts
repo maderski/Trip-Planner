@@ -109,7 +109,7 @@ export function renderTrip(container: HTMLElement): void {
                 const color = accColors[acc.type] ?? 'var(--text-tertiary)';
                 return `
                   <div class="upcoming-item glass-card">
-                    <span class="upcoming-icon" style="color:${color}">${icons.bed}</span>
+                    <span class="upcoming-icon" style="color:var(--info)">${icons.bed}</span>
                     <div class="upcoming-info">
                       <div class="upcoming-title">${escapeHtml(acc.name)}</div>
                       <div class="upcoming-meta">${formatDateRange(acc.checkIn, acc.checkOut)} · <span style="color:${color}">${acc.type}</span></div>
