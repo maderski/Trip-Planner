@@ -83,17 +83,12 @@
   font-weight: 700;
 }
 
-.calendar-day .event-dot {
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: var(--accent-light);
-  position: absolute;
-  bottom: 4px;
+.calendar-day.has-events {
+  box-shadow: inset 0 0 0 2px var(--accent-light);
 }
 
-.calendar-day.selected .event-dot {
-  background: #fff;
+.calendar-day.selected.has-events {
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.5);
 }
 
 .day-events-header {

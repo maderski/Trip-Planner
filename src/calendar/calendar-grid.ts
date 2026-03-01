@@ -31,10 +31,9 @@ export function renderCalendarGrid(container: HTMLElement, options: CalendarGrid
     if (dateStr === today) classes.push('today');
     if (dateStr === selectedDate) classes.push('selected');
     if (tripStart && tripEnd && isDateInRange(dateStr, tripStart, tripEnd)) classes.push('in-range');
+    if (eventDates.has(dateStr)) classes.push('has-events');
 
-    const dot = eventDates.has(dateStr) ? '<div class="event-dot"></div>' : '';
-
-    html += `<div class="${classes.join(' ')}" data-date="${dateStr}">${day}${dot}</div>`;
+    html += `<div class="${classes.join(' ')}" data-date="${dateStr}">${day}</div>`;
   }
 
   container.innerHTML = html;
