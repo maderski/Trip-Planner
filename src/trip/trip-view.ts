@@ -403,7 +403,7 @@ function openTripModal(container: HTMLElement): void {
   fileInput.addEventListener('change', () => {
     const file = fileInput.files?.[0];
     if (!file) return;
-    resizeImage(file, 800, 600).then((dataUrl) => {
+    resizeImage(file, 1600, 900).then((dataUrl) => {
       pendingImage = dataUrl;
       previewContainer.innerHTML = `<img src="${dataUrl}" class="image-preview" />`;
       removeBtn.style.display = '';

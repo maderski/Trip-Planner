@@ -17,7 +17,7 @@ export function resizeImage(file: File, maxWidth: number, maxHeight: number): Pr
         canvas.height = height;
         const ctx = canvas.getContext('2d')!;
         ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', 0.75));
+        resolve(canvas.toDataURL('image/jpeg', 0.88));
       };
       img.src = reader.result as string;
     };
