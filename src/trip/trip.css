@@ -388,10 +388,17 @@
 
 @media (min-width: 1024px) {
   .trip-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 400px;
+    display: flex;
     gap: var(--space-xl);
     align-items: start;
+  }
+  .trip-col-left {
+    flex: 1;
+    min-width: 0;
+  }
+  .trip-col-right {
+    flex: 0 0 460px;
+    width: 460px;
   }
   .trip-hero.has-image {
     min-height: 380px;

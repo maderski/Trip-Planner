@@ -78,11 +78,6 @@ export function renderTrip(container: HTMLElement): void {
     Campground: 'var(--badge-campground)', Cabin: 'var(--badge-cabin)',
     Other: 'var(--text-tertiary)',
   };
-  const mealColors: Record<string, string> = {
-    Breakfast: 'var(--badge-breakfast)', Lunch: 'var(--badge-lunch)',
-    Dinner: 'var(--badge-dinner)', Snacks: 'var(--badge-snacks)',
-    Drinks: 'var(--badge-drinks)',
-  };
   const dateGroups = new Map<string, typeof upcomingItems>();
   for (const ui of upcomingItems) {
     if (!dateGroups.has(ui.sortDate)) dateGroups.set(ui.sortDate, []);
@@ -116,7 +111,7 @@ export function renderTrip(container: HTMLElement): void {
                 const color = accColors[acc.type] ?? 'var(--text-tertiary)';
                 return `
                   <div class="upcoming-item glass-card" data-id="${acc.id}" data-type="stay">
-                    <span class="upcoming-icon" style="color:${color}">${icons.bed}</span>
+                    <span class="upcoming-icon" style="color:var(--badge-airbnb)">${icons.bed}</span>
                     <div class="upcoming-info">
                       <div class="upcoming-title">${escapeHtml(acc.name)}</div>
                       <div class="upcoming-meta">${formatDateRange(acc.checkIn, acc.checkOut)} · <span style="color:${color}">${acc.type}</span></div>
@@ -124,11 +119,10 @@ export function renderTrip(container: HTMLElement): void {
                   </div>`;
               }
               const rest = item as Restaurant;
-              const color = mealColors[rest.mealType] ?? 'var(--text-tertiary)';
               const meta = [rest.mealType, rest.cuisineType].filter(Boolean).join(' · ');
               return `
                 <div class="upcoming-item glass-card" data-id="${rest.id}" data-type="restaurant">
-                  <span class="upcoming-icon" style="color:${color}">${icons.restaurant}</span>
+                  <span class="upcoming-icon" style="color:var(--badge-lunch)">${icons.restaurant}</span>
                   <div class="upcoming-info">
                     <div class="upcoming-title">${escapeHtml(rest.name)}</div>
                     ${meta ? `<div class="upcoming-meta">${escapeHtml(meta)}</div>` : ''}
@@ -297,21 +291,6 @@ function renderTripDayPanel(container: HTMLElement, data: TripData, date: string
   const dayStays = data.accommodations.filter((a) => a.checkIn && a.checkOut && isDateInRange(date, a.checkIn, a.checkOut));
   const dayRestaurants = data.restaurants.filter((r) => r.visitDate === date);
 
-  const stayColors: Record<string, string> = {
-    Hotel: 'var(--badge-hotel)',
-    Airbnb: 'var(--badge-airbnb)',
-    Campground: 'var(--badge-campground)',
-    Cabin: 'var(--badge-cabin)',
-    Other: 'var(--text-tertiary)',
-  };
-  const mealColors: Record<string, string> = {
-    Breakfast: 'var(--badge-breakfast)',
-    Lunch: 'var(--badge-lunch)',
-    Dinner: 'var(--badge-dinner)',
-    Snacks: 'var(--badge-snacks)',
-    Drinks: 'var(--badge-drinks)',
-  };
-
   const items: string[] = [];
   dayEvents.forEach((ev) => {
     items.push(`
@@ -322,19 +301,17 @@ function renderTripDayPanel(container: HTMLElement, data: TripData, date: string
     `);
   });
   dayStays.forEach((acc) => {
-    const color = stayColors[acc.type] ?? 'var(--text-tertiary)';
     items.push(`
       <div class="trip-day-item">
-        <span class="trip-day-item-icon" style="color:${color}">${icons.bed}</span>
+        <span class="trip-day-item-icon" style="color:var(--badge-airbnb)">${icons.bed}</span>
         <span>${escapeHtml(acc.name)}</span>
       </div>
     `);
   });
   dayRestaurants.forEach((rest) => {
-    const color = mealColors[rest.mealType] ?? 'var(--text-tertiary)';
     items.push(`
       <div class="trip-day-item">
-        <span class="trip-day-item-icon" style="color:${color}">${icons.restaurant}</span>
+        <span class="trip-day-item-icon" style="color:var(--badge-lunch)">${icons.restaurant}</span>
         <span>${escapeHtml(rest.name)}</span>
       </div>
     `);

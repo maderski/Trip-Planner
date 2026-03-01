@@ -122,11 +122,12 @@
   .app-content {
     margin-left: var(--sidebar-width);
     max-width: 900px;
+    width: calc(100% - var(--sidebar-width));
     padding: var(--space-xl) var(--space-2xl);
     padding-bottom: var(--space-xl);
   }
   .app-content.trip-page {
-    max-width: 1300px;
+    max-width: none;
   }
   .view-header {
     margin: 0;
