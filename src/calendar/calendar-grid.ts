@@ -7,11 +7,13 @@ interface CalendarGridOptions {
   tripStart: string;
   tripEnd: string;
   eventDates: Set<string>;
+  stayDates: Set<string>;
+  restaurantDates: Set<string>;
   onDayClick: (date: string) => void;
 }
 
 export function renderCalendarGrid(container: HTMLElement, options: CalendarGridOptions): void {
-  const { year, month, selectedDate, tripStart, tripEnd, eventDates, onDayClick } = options;
+  const { year, month, selectedDate, tripStart, tripEnd, eventDates, stayDates, restaurantDates, onDayClick } = options;
   const daysInMonth = getDaysInMonth(year, month);
   const firstDay = getFirstDayOfMonth(year, month);
   const today = toDateString(new Date());
@@ -31,9 +33,13 @@ export function renderCalendarGrid(container: HTMLElement, options: CalendarGrid
     if (dateStr === today) classes.push('today');
     if (dateStr === selectedDate) classes.push('selected');
     if (tripStart && tripEnd && isDateInRange(dateStr, tripStart, tripEnd)) classes.push('in-range');
-    if (eventDates.has(dateStr)) classes.push('has-events');
+    const dots: string[] = [];
+    if (stayDates.has(dateStr)) dots.push('<span class="day-icon day-icon--stay"></span>');
+    if (restaurantDates.has(dateStr)) dots.push('<span class="day-icon day-icon--food"></span>');
+    if (eventDates.has(dateStr)) dots.push('<span class="day-icon day-icon--event"></span>');
+    const iconBar = dots.length ? `<div class="day-icon-bar">${dots.join('')}</div>` : '';
 
-    html += `<div class="${classes.join(' ')}" data-date="${dateStr}">${day}</div>`;
+    html += `<div class="${classes.join(' ')}" data-date="${dateStr}">${day}${iconBar}</div>`;
   }
 
   container.innerHTML = html;

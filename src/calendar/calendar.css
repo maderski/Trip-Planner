@@ -83,12 +83,24 @@
   font-weight: 700;
 }
 
-.calendar-day.has-events {
-  box-shadow: inset 0 0 0 2px var(--accent-light);
+.day-icon-bar {
+  display: flex;
+  gap: 2px;
+  margin-top: 2px;
 }
 
-.calendar-day.selected.has-events {
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.5);
+.day-icon {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+
+.day-icon--stay { background: var(--badge-airbnb); }
+.day-icon--food { background: var(--badge-lunch); }
+.day-icon--event { background: var(--accent-light); }
+
+.calendar-day.selected .day-icon {
+  opacity: 0.7;
 }
 
 .day-events-header {
@@ -101,6 +113,15 @@
 .day-events-title {
   font-size: var(--font-base);
   font-weight: 600;
+}
+
+.day-section-header {
+  font-size: var(--font-xs);
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: var(--space-md) 0 var(--space-xs);
 }
 
 .event-item {

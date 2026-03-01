@@ -1,6 +1,7 @@
 import { loadData, saveData } from '../shared/storage.ts';
 import { openModal, openConfirmModal } from '../shared/components/modal.ts';
 import { icons } from '../shared/utils/icons.ts';
+import { formatDate } from '../shared/utils/dates.ts';
 import { generateId } from '../shared/utils/id.ts';
 import { renderMapHtml, hydrateMapPreviews } from '../shared/utils/maps.ts';
 import { renderPhotoGallery, wirePhotoGallery } from '../shared/utils/photos.ts';
@@ -82,6 +83,9 @@ export function renderRestaurants(container: HTMLElement): void {
       }
       if (rest.menuLink) {
         bodyParts.push(`<div class="card-detail">${icons.menu} <a href="${escapeAttr(rest.menuLink)}" target="_blank" rel="noopener">Menu</a></div>`);
+      }
+      if (rest.visitDate) {
+        bodyParts.push(`<div class="card-detail">${icons.calendar} <span>${formatDate(rest.visitDate)}</span></div>`);
       }
       if (rest.notes) {
         bodyParts.push(`<div style="margin-top: 4px;">${escapeHtml(rest.notes)}</div>`);
@@ -206,6 +210,11 @@ function openRestModal(container: HTMLElement, rest: Restaurant | null): void {
       <input class="form-input" type="url" name="menuLink" value="${escapeAttr(rest?.menuLink || '')}" placeholder="https://..." />
     </div>
     <div class="form-group">
+      <label class="form-label">Visit Date</label>
+      <input class="form-input" type="date" name="visitDate" value="${rest?.visitDate || ''}" />
+      <span class="form-hint">Pins this restaurant to a day on the calendar</span>
+    </div>
+    <div class="form-group">
       <label class="form-label">Notes</label>
       <textarea class="form-input" name="notes" placeholder="Recommendations, dietary info...">${escapeHtml(rest?.notes || '')}</textarea>
     </div>
@@ -223,6 +232,7 @@ function openRestModal(container: HTMLElement, rest: Restaurant | null): void {
         mapLink: fd.get('mapLink') as string,
         link: rest?.link || '',
         menuLink: fd.get('menuLink') as string,
+        visitDate: (fd.get('visitDate') as string) || undefined,
         notes: fd.get('notes') as string,
         visited: rest?.visited || false,
         photos: rest?.photos || [],
