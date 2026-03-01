@@ -3,4 +3,5 @@ export interface Destination {
   startDate: string;
   endDate: string;
   notes: string;
+  image: string;
 }
