@@ -36,6 +36,7 @@ export function renderRestaurants(container: HTMLElement): void {
     <div class="view">
       <div class="view-header">
         <h1 class="view-title">Restaurants</h1>
+        <button class="view-header-btn" id="add-rest">${icons.plus}</button>
       </div>
       <div class="filter-bar">
         <div class="pill-filter">
@@ -44,7 +45,6 @@ export function renderRestaurants(container: HTMLElement): void {
       </div>
       <div class="restaurants-list" id="rest-list"></div>
     </div>
-    <button class="fab" id="add-rest">${icons.plus}</button>
   `;
 
   container.querySelectorAll('.pill').forEach((pill) => {

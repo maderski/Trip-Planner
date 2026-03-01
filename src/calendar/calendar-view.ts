@@ -65,6 +65,7 @@ function render(container: HTMLElement): void {
     <div class="view">
       <div class="view-header">
         <h1 class="view-title">Calendar</h1>
+        <button class="view-header-btn" id="add-event">${icons.plus}</button>
       </div>
       <div class="calendar-nav">
         <button id="cal-prev">${icons.chevronLeft}</button>
@@ -74,7 +75,6 @@ function render(container: HTMLElement): void {
       <div class="calendar-grid" id="cal-grid"></div>
       <div id="day-events"></div>
     </div>
-    <button class="fab" id="add-event">${icons.plus}</button>
   `;
 
   const grid = container.querySelector('#cal-grid') as HTMLElement;

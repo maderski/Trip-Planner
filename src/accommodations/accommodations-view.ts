@@ -23,10 +23,10 @@ export function renderAccommodations(container: HTMLElement): void {
     <div class="view">
       <div class="view-header">
         <h1 class="view-title">Accommodations</h1>
+        <button class="view-header-btn" id="add-acc">${icons.plus}</button>
       </div>
       <div class="accommodations-list" id="acc-list"></div>
     </div>
-    <button class="fab" id="add-acc">${icons.plus}</button>
   `;
 
   const list = container.querySelector('#acc-list')!;
