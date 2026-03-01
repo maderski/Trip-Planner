@@ -8,6 +8,7 @@ export interface Restaurant {
   cuisineType: string;
   address: string;
   link: string;
+  menuLink: string;
   priceRange: PriceRange;
   notes: string;
   visited: boolean;

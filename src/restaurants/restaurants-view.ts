@@ -80,8 +80,8 @@ export function renderRestaurants(container: HTMLElement): void {
       if (rest.address) {
         bodyParts.push(`<div class="card-detail">${icons.mapPin} <a href="https://maps.google.com/?q=${encodeURIComponent(rest.address)}" target="_blank" rel="noopener">${escapeHtml(rest.address)}</a></div>`);
       }
-      if (rest.link) {
-        bodyParts.push(`<div class="card-detail">${icons.link} <a href="${escapeAttr(rest.link)}" target="_blank" rel="noopener">Website</a></div>`);
+      if (rest.menuLink) {
+        bodyParts.push(`<div class="card-detail">${icons.menu} <a href="${escapeAttr(rest.menuLink)}" target="_blank" rel="noopener">Menu</a></div>`);
       }
       if (rest.notes) {
         bodyParts.push(`<div style="margin-top: 4px;">${escapeHtml(rest.notes)}</div>`);
@@ -202,8 +202,8 @@ function openRestModal(container: HTMLElement, rest: Restaurant | null): void {
       <span class="form-hint">Paste a shared link to show a map preview</span>
     </div>
     <div class="form-group">
-      <label class="form-label">Website</label>
-      <input class="form-input" type="url" name="link" value="${escapeAttr(rest?.link || '')}" placeholder="https://..." />
+      <label class="form-label">Menu Link</label>
+      <input class="form-input" type="url" name="menuLink" value="${escapeAttr(rest?.menuLink || '')}" placeholder="https://..." />
     </div>
     <div class="form-group">
       <label class="form-label">Notes</label>
@@ -221,7 +221,8 @@ function openRestModal(container: HTMLElement, rest: Restaurant | null): void {
         cuisineType: fd.get('cuisineType') as string,
         address: fd.get('address') as string,
         mapLink: fd.get('mapLink') as string,
-        link: fd.get('link') as string,
+        link: rest?.link || '',
+        menuLink: fd.get('menuLink') as string,
         notes: fd.get('notes') as string,
         visited: rest?.visited || false,
         photos: rest?.photos || [],
