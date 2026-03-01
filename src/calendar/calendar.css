@@ -127,8 +127,18 @@
 }
 
 .event-detail {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
   font-size: var(--font-sm);
   color: var(--text-secondary);
+}
+
+.event-detail svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--text-tertiary);
 }
 
 .event-actions {
