@@ -124,12 +124,15 @@ function googleEmbedToMapsUrl(embedSrc: string): string {
   try {
     const url = new URL(embedSrc);
     const q = url.searchParams.get('q') || url.searchParams.get('query');
-    if (q) return `https://www.google.com/maps/search/${encodeURIComponent(q)}`;
+    if (q) return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
     const pb = url.searchParams.get('pb');
     if (pb) {
-      const latMatch = pb.match(/!2d(-?\d+\.?\d*)/);
-      const lngMatch = pb.match(/!3d(-?\d+\.?\d*)/);
-      if (latMatch && lngMatch) return `https://www.google.com/maps/@${lngMatch[1]},${latMatch[1]},15z`;
+      // In the pb encoding, !3d is latitude and !2d is longitude
+      const lngMatch = pb.match(/!2d(-?\d+\.?\d*)/);
+      const latMatch = pb.match(/!3d(-?\d+\.?\d*)/);
+      if (latMatch && lngMatch) {
+        return `https://www.google.com/maps/search/?api=1&query=${latMatch[1]},${lngMatch[1]}`;
+      }
     }
   } catch { /* ignore */ }
   return 'https://www.google.com/maps';
