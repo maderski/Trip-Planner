@@ -26,16 +26,23 @@ export function renderTrip(container: HTMLElement): void {
   const photos = dest.photos || [];
   const today = toDateString(new Date());
   const upcomingEvents = data.events
-    .filter((e) => (e.endDate || e.date) >= today)
+    .filter((e) => !e.suggested && (e.endDate || e.date) >= today)
     .map((e) => ({ type: 'event' as const, sortDate: e.date, item: e }));
   const upcomingStays = data.accommodations
-    .filter((a) => a.checkOut >= today)
+    .filter((a) => !a.suggested && a.checkOut >= today)
     .map((a) => ({ type: 'stay' as const, sortDate: a.checkIn, item: a }));
   const upcomingRestaurants = data.restaurants
-    .filter((r) => r.visitDate && r.visitDate >= today)
+    .filter((r) => !r.suggested && r.visitDate && r.visitDate >= today)
     .map((r) => ({ type: 'restaurant' as const, sortDate: r.visitDate!, item: r }));
   const upcomingItems = [...upcomingEvents, ...upcomingStays, ...upcomingRestaurants]
     .sort((a, b) => a.sortDate.localeCompare(b.sortDate));
+
+  type UpcomingEntry = { type: 'event' | 'stay' | 'restaurant'; item: CalendarEvent | Accommodation | Restaurant };
+  const suggestedItems: UpcomingEntry[] = [
+    ...data.events.filter((e) => e.suggested).map((e) => ({ type: 'event' as const, item: e as CalendarEvent })),
+    ...data.accommodations.filter((a) => a.suggested).map((a) => ({ type: 'stay' as const, item: a as Accommodation })),
+    ...data.restaurants.filter((r) => r.suggested).map((r) => ({ type: 'restaurant' as const, item: r as Restaurant })),
+  ];
 
   let countdownHtml = '';
   if (dest.startDate) {
@@ -84,6 +91,57 @@ export function renderTrip(container: HTMLElement): void {
     dateGroups.get(ui.sortDate)!.push(ui);
   }
 
+  function renderUpcomingItem(type: string, item: CalendarEvent | Accommodation | Restaurant): string {
+    if (type === 'event') {
+      const ev = item as CalendarEvent;
+      const meta = [ev.time ? formatTime(ev.time) : '', ev.location].filter(Boolean).join(' · ');
+      return `
+        <div class="upcoming-item glass-card" data-id="${ev.id}" data-type="event">
+          <span class="upcoming-icon" style="color:var(--accent-light)">${icons.calendar}</span>
+          <div class="upcoming-info">
+            <div class="upcoming-title">${escapeHtml(ev.title)}</div>
+            ${meta ? `<div class="upcoming-meta">${escapeHtml(meta)}</div>` : ''}
+          </div>
+        </div>`;
+    } else if (type === 'stay') {
+      const acc = item as Accommodation;
+      const color = accColors[acc.type] ?? 'var(--text-tertiary)';
+      const dateInfo = acc.checkIn && acc.checkOut ? `${formatDateRange(acc.checkIn, acc.checkOut)} · ` : '';
+      return `
+        <div class="upcoming-item glass-card" data-id="${acc.id}" data-type="stay">
+          <span class="upcoming-icon" style="color:var(--badge-airbnb)">${icons.bed}</span>
+          <div class="upcoming-info">
+            <div class="upcoming-title">${escapeHtml(acc.name)}</div>
+            <div class="upcoming-meta">${dateInfo}<span style="color:${color}">${acc.type}</span></div>
+          </div>
+        </div>`;
+    }
+    const rest = item as Restaurant;
+    const meta = [rest.mealType, rest.cuisineType].filter(Boolean).join(' · ');
+    return `
+      <div class="upcoming-item glass-card" data-id="${rest.id}" data-type="restaurant">
+        <span class="upcoming-icon" style="color:var(--badge-lunch)">${icons.restaurant}</span>
+        <div class="upcoming-info">
+          <div class="upcoming-title">${escapeHtml(rest.name)}</div>
+          ${meta ? `<div class="upcoming-meta">${escapeHtml(meta)}</div>` : ''}
+        </div>
+      </div>`;
+  }
+
+  const suggestedHtml = suggestedItems.length === 0 ? '' : `
+    <div class="trip-section">
+      <div class="trip-section-header">
+        <h2 class="trip-section-title">Suggested</h2>
+        <span class="trip-section-count">${suggestedItems.length} item${suggestedItems.length !== 1 ? 's' : ''}</span>
+      </div>
+      <div class="upcoming-list">
+        <div class="upcoming-date-group">
+          ${suggestedItems.map(({ type, item }) => renderUpcomingItem(type, item)).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+
   const upcomingHtml = upcomingItems.length === 0 ? '' : `
     <div class="trip-section">
       <div class="trip-section-header">
@@ -94,41 +152,7 @@ export function renderTrip(container: HTMLElement): void {
         ${Array.from(dateGroups.entries()).map(([date, groupItems]) => `
           <div class="upcoming-date-group">
             <div class="upcoming-date-label">${formatDate(date)}</div>
-            ${groupItems.map(({ type, item }) => {
-              if (type === 'event') {
-                const ev = item as CalendarEvent;
-                const meta = [ev.time ? formatTime(ev.time) : '', ev.location].filter(Boolean).join(' · ');
-                return `
-                  <div class="upcoming-item glass-card" data-id="${ev.id}" data-type="event">
-                    <span class="upcoming-icon" style="color:var(--accent-light)">${icons.calendar}</span>
-                    <div class="upcoming-info">
-                      <div class="upcoming-title">${escapeHtml(ev.title)}</div>
-                      ${meta ? `<div class="upcoming-meta">${escapeHtml(meta)}</div>` : ''}
-                    </div>
-                  </div>`;
-              } else if (type === 'stay') {
-                const acc = item as Accommodation;
-                const color = accColors[acc.type] ?? 'var(--text-tertiary)';
-                return `
-                  <div class="upcoming-item glass-card" data-id="${acc.id}" data-type="stay">
-                    <span class="upcoming-icon" style="color:var(--badge-airbnb)">${icons.bed}</span>
-                    <div class="upcoming-info">
-                      <div class="upcoming-title">${escapeHtml(acc.name)}</div>
-                      <div class="upcoming-meta">${formatDateRange(acc.checkIn, acc.checkOut)} · <span style="color:${color}">${acc.type}</span></div>
-                    </div>
-                  </div>`;
-              }
-              const rest = item as Restaurant;
-              const meta = [rest.mealType, rest.cuisineType].filter(Boolean).join(' · ');
-              return `
-                <div class="upcoming-item glass-card" data-id="${rest.id}" data-type="restaurant">
-                  <span class="upcoming-icon" style="color:var(--badge-lunch)">${icons.restaurant}</span>
-                  <div class="upcoming-info">
-                    <div class="upcoming-title">${escapeHtml(rest.name)}</div>
-                    ${meta ? `<div class="upcoming-meta">${escapeHtml(meta)}</div>` : ''}
-                  </div>
-                </div>`;
-            }).join('')}
+            ${groupItems.map(({ type, item }) => renderUpcomingItem(type, item)).join('')}
           </div>
         `).join('')}
       </div>
@@ -187,6 +211,7 @@ export function renderTrip(container: HTMLElement): void {
             </div>
           </div>
           ${upcomingHtml}
+          ${suggestedHtml}
         </div>
         <div class="trip-col-right">
           ${calendarWidgetHtml}
