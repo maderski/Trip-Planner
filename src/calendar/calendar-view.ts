@@ -14,7 +14,7 @@ export function renderCalendar(container: HTMLElement): void {
   const data = loadData();
   const today = toDateString(new Date());
 
-  let events = [...data.events];
+  let events = data.events.filter((e) => !e.suggested);
   if (activeFilter === 'Upcoming') {
     events = events.filter((e) => (e.endDate || e.date) >= today);
   }
