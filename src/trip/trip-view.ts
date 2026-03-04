@@ -264,10 +264,10 @@ export function renderTrip(container: HTMLElement): void {
     });
     container.querySelector('.trip-calendar-month')!.textContent = monthLabel;
 
-    const eventDates = new Set(d.events.map((e) => e.date));
+    const eventDates = new Set(d.events.filter((e) => !e.suggested).map((e) => e.date));
     const stayDates = new Set<string>();
     for (const acc of d.accommodations) {
-      if (!acc.checkIn || !acc.checkOut) continue;
+      if (acc.suggested || !acc.checkIn || !acc.checkOut) continue;
       let cur = new Date(acc.checkIn + 'T00:00:00');
       const last = new Date(acc.checkOut + 'T00:00:00');
       while (cur <= last) {
@@ -275,7 +275,7 @@ export function renderTrip(container: HTMLElement): void {
         cur.setDate(cur.getDate() + 1);
       }
     }
-    const restaurantDates = new Set(d.restaurants.flatMap((r) => r.visitDate ? [r.visitDate] : []));
+    const restaurantDates = new Set(d.restaurants.filter((r) => !r.suggested).flatMap((r) => r.visitDate ? [r.visitDate] : []));
 
     renderCalendarGrid(container.querySelector('#trip-cal-grid') as HTMLElement, {
       year: calYear,
@@ -312,9 +312,9 @@ export function renderTrip(container: HTMLElement): void {
 
 function renderTripDayPanel(container: HTMLElement, data: TripData, date: string): void {
   const panel = container.querySelector('#trip-day-panel') as HTMLElement;
-  const dayEvents = data.events.filter((e) => isDateInRange(date, e.date, e.endDate || e.date));
-  const dayStays = data.accommodations.filter((a) => a.checkIn && a.checkOut && isDateInRange(date, a.checkIn, a.checkOut));
-  const dayRestaurants = data.restaurants.filter((r) => r.visitDate === date);
+  const dayEvents = data.events.filter((e) => !e.suggested && isDateInRange(date, e.date, e.endDate || e.date));
+  const dayStays = data.accommodations.filter((a) => !a.suggested && a.checkIn && a.checkOut && isDateInRange(date, a.checkIn, a.checkOut));
+  const dayRestaurants = data.restaurants.filter((r) => !r.suggested && r.visitDate === date);
 
   const items: string[] = [];
   dayEvents.forEach((ev) => {
