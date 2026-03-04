@@ -53,7 +53,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: var(--bg-primary);
+  background: transparent;
   margin: 0 calc(-1 * var(--space-md));
   padding: var(--space-md) var(--space-md) var(--space-sm);
   margin-bottom: var(--space-lg);
