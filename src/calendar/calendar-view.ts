@@ -3,7 +3,7 @@ import { openModal, openConfirmModal } from '../shared/components/modal.ts';
 import { icons } from '../shared/utils/icons.ts';
 import { formatDate, formatDateRange, formatTime, toDateString } from '../shared/utils/dates.ts';
 import { generateId } from '../shared/utils/id.ts';
-import { renderMapHtml, hydrateMapPreviews } from '../shared/utils/maps.ts';
+import { renderMapHtml, hydrateMapPreviews, extractMapLink } from '../shared/utils/maps.ts';
 import { renderPhotoGallery, wirePhotoGallery } from '../shared/utils/photos.ts';
 import type { CalendarEvent } from './types.ts';
 import './calendar.css';
@@ -190,8 +190,8 @@ export function openEventModal(container: HTMLElement, event: CalendarEvent | nu
     </div>
     <div class="form-group">
       <label class="form-label">Maps Link</label>
-      <input class="form-input" name="mapLink" value="${escapeAttr(event?.mapLink || '')}" placeholder="Paste a Google Maps share link" />
-      <span class="form-hint">Paste a shared link to show a map preview</span>
+      <input class="form-input" name="mapLink" value="${escapeAttr(event?.mapLink || '')}" placeholder="Paste a Maps share link or embed code" />
+      <span class="form-hint">Paste a shared link or embed code to show a map preview</span>
     </div>
     <div class="form-group">
       <label class="form-label">Description</label>
@@ -208,7 +208,7 @@ export function openEventModal(container: HTMLElement, event: CalendarEvent | nu
         date: fd.get('date') as string,
         time: fd.get('time') as string,
         location: fd.get('location') as string,
-        mapLink: fd.get('mapLink') as string,
+        mapLink: extractMapLink(fd.get('mapLink') as string),
         description: fd.get('description') as string,
         photos: event?.photos || [],
         suggested: form.querySelector<HTMLInputElement>('input[name="suggested"]')!.checked,

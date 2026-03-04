@@ -9,6 +9,7 @@ export interface Accommodation {
   address: string;
   link: string;
   confirmationCode: string;
+  mapLink: string;
   notes: string;
   suggested?: boolean;
 }

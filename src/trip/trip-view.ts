@@ -3,7 +3,7 @@ import { openModal } from '../shared/components/modal.ts';
 import { icons } from '../shared/utils/icons.ts';
 import { formatDate, formatDateRange, formatTime, isDateInRange, toDateString, daysUntil } from '../shared/utils/dates.ts';
 import { navigateTo } from '../shared/router.ts';
-import { renderMapHtml, hydrateMapPreviews } from '../shared/utils/maps.ts';
+import { renderMapHtml, hydrateMapPreviews, extractMapLink } from '../shared/utils/maps.ts';
 import { resizeImage, renderPhotoGallery, wirePhotoGallery } from '../shared/utils/photos.ts';
 import { renderCalendarGrid } from '../calendar/calendar-grid.ts';
 import { openEventModal } from '../calendar/calendar-view.ts';
@@ -368,8 +368,8 @@ function openTripModal(container: HTMLElement): void {
     </div>
     <div class="form-group">
       <label class="form-label">Maps Link</label>
-      <input class="form-input" name="mapLink" value="${escapeAttr(dest.mapLink || '')}" placeholder="Paste a Google Maps share link" />
-      <span class="form-hint">Paste a shared link from Google Maps, Apple Maps, etc.</span>
+      <input class="form-input" name="mapLink" value="${escapeAttr(dest.mapLink || '')}" placeholder="Paste a Maps share link or embed code" />
+      <span class="form-hint">Paste a shared link or embed code to show a map preview</span>
     </div>
     <div class="form-group">
       <label class="form-label">Notes</label>
@@ -384,7 +384,7 @@ function openTripModal(container: HTMLElement): void {
         endDate: fd.get('endDate') as string,
         notes: fd.get('notes') as string,
         image: pendingImage || '',
-        mapLink: fd.get('mapLink') as string,
+        mapLink: extractMapLink(fd.get('mapLink') as string),
         photos: dest.photos || [],
       };
       saveData(data);

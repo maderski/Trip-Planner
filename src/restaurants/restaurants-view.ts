@@ -3,7 +3,7 @@ import { openModal, openConfirmModal } from '../shared/components/modal.ts';
 import { icons } from '../shared/utils/icons.ts';
 import { formatDate } from '../shared/utils/dates.ts';
 import { generateId } from '../shared/utils/id.ts';
-import { renderMapHtml, hydrateMapPreviews } from '../shared/utils/maps.ts';
+import { renderMapHtml, hydrateMapPreviews, extractMapLink } from '../shared/utils/maps.ts';
 import { renderPhotoGallery, wirePhotoGallery } from '../shared/utils/photos.ts';
 import type { Restaurant, MealType, PriceRange } from './types.ts';
 import './restaurants.css';
@@ -231,8 +231,8 @@ export function openRestModal(container: HTMLElement, rest: Restaurant | null, o
     </div>
     <div class="form-group">
       <label class="form-label">Maps Link</label>
-      <input class="form-input" name="mapLink" value="${escapeAttr(rest?.mapLink || '')}" placeholder="Paste a Google Maps share link" />
-      <span class="form-hint">Paste a shared link to show a map preview</span>
+      <input class="form-input" name="mapLink" value="${escapeAttr(rest?.mapLink || '')}" placeholder="Paste a Maps share link or embed code" />
+      <span class="form-hint">Paste a shared link or embed code to show a map preview</span>
     </div>
     <div class="form-group">
       <label class="form-label">Menu Link</label>
@@ -258,7 +258,7 @@ export function openRestModal(container: HTMLElement, rest: Restaurant | null, o
         priceRange: fd.get('priceRange') as PriceRange,
         cuisineType: fd.get('cuisineType') as string,
         address: fd.get('address') as string,
-        mapLink: fd.get('mapLink') as string,
+        mapLink: extractMapLink(fd.get('mapLink') as string),
         link: rest?.link || '',
         menuLink: fd.get('menuLink') as string,
         visitDate: (fd.get('visitDate') as string) || undefined,

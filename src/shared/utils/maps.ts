@@ -107,11 +107,40 @@ function buildOsmEmbedHtml(coords: Coords, originalLink: string, height: number,
     + `</div></div>`;
 }
 
+// ── Iframe / embed extraction ─────────────────────────────────────────────────
+
+/** If input contains an <iframe> tag, extract its src URL; otherwise return as-is. */
+export function extractMapLink(input: string): string {
+  if (!input) return input;
+  const match = input.match(/<iframe[^>]+src=["']([^"']+)["']/i);
+  return match ? match[1] : input;
+}
+
+function isGoogleMapsEmbed(url: string): boolean {
+  return /google\.com\/maps\/embed/i.test(url);
+}
+
+function buildGoogleEmbedHtml(src: string, height: number): string {
+  return `<div class="map-container">`
+    + `<div class="map-iframe-wrap">`
+    + `<iframe class="map-iframe" src="${escapeAttr(src)}" style="height:${height}px;" loading="lazy" referrerpolicy="no-referrer" allowfullscreen></iframe>`
+    + `</div>`
+    + `<div class="map-footer">`
+    + `<a href="${escapeAttr(src)}" target="_blank" rel="noopener" class="map-open-label">Open in Maps ↗</a>`
+    + `</div></div>`;
+}
+
 // ── Public HTML helpers ───────────────────────────────────────────────────────
 
 export function renderMapHtml(mapLink: string, _icons: unknown, compact = false, photoUrl?: string): string {
   if (!mapLink) return '';
   const height = compact ? 140 : 180;
+
+  // Google Maps embed URL → render directly as Google Maps iframe
+  if (isGoogleMapsEmbed(mapLink)) {
+    return buildGoogleEmbedHtml(mapLink, height);
+  }
+
   const attr = escapeAttr(mapLink);
   const photoAttr = escapeAttr(photoUrl ?? '');
 

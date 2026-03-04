@@ -4,6 +4,7 @@ import { createCard } from '../shared/components/card.ts';
 import { icons } from '../shared/utils/icons.ts';
 import { formatDate, formatDateRange } from '../shared/utils/dates.ts';
 import { generateId } from '../shared/utils/id.ts';
+import { renderMapHtml, hydrateMapPreviews, extractMapLink } from '../shared/utils/maps.ts';
 import type { Accommodation, AccommodationType } from './types.ts';
 import './accommodations.css';
 
@@ -70,6 +71,9 @@ export function renderAccommodations(container: HTMLElement): void {
         if (acc.notes) {
           bodyParts.push(`<div style="margin-top: 4px;">${escapeHtml(acc.notes)}</div>`);
         }
+        if (acc.mapLink) {
+          bodyParts.push(`<div class="map-inline">${renderMapHtml(acc.mapLink, icons, true)}</div>`);
+        }
 
         const suggestedBadgeHtml = acc.suggested ? '<span class="badge badge-suggested" style="margin-bottom: 4px;">Suggested</span> ' : '';
         const card = createCard({
@@ -89,6 +93,8 @@ export function renderAccommodations(container: HTMLElement): void {
   }
 
   container.querySelector('#add-acc')!.addEventListener('click', () => openAccModal(container, null));
+
+  void hydrateMapPreviews(container);
 }
 
 export function openAccModal(container: HTMLElement, acc: Accommodation | null, onSave?: () => void): void {
@@ -133,6 +139,11 @@ export function openAccModal(container: HTMLElement, acc: Accommodation | null, 
       <input class="form-input" type="url" name="link" value="${escapeAttr(acc?.link || '')}" placeholder="https://..." />
     </div>
     <div class="form-group">
+      <label class="form-label">Maps Link</label>
+      <input class="form-input" name="mapLink" value="${escapeAttr(acc?.mapLink || '')}" placeholder="Paste a Maps share link or embed code" />
+      <span class="form-hint">Paste a shared link or embed code to show a map preview</span>
+    </div>
+    <div class="form-group">
       <label class="form-label">Confirmation Code</label>
       <input class="form-input" name="confirmationCode" value="${escapeAttr(acc?.confirmationCode || '')}" placeholder="ABC123" />
     </div>
@@ -153,6 +164,7 @@ export function openAccModal(container: HTMLElement, acc: Accommodation | null, 
         address: fd.get('address') as string,
         link: fd.get('link') as string,
         confirmationCode: fd.get('confirmationCode') as string,
+        mapLink: extractMapLink(fd.get('mapLink') as string),
         notes: fd.get('notes') as string,
         suggested: form.querySelector<HTMLInputElement>('input[name="suggested"]')!.checked,
       };
