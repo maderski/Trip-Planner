@@ -120,13 +120,29 @@ function isGoogleMapsEmbed(url: string): boolean {
   return /google\.com\/maps\/embed/i.test(url);
 }
 
+function googleEmbedToMapsUrl(embedSrc: string): string {
+  try {
+    const url = new URL(embedSrc);
+    const q = url.searchParams.get('q') || url.searchParams.get('query');
+    if (q) return `https://www.google.com/maps/search/${encodeURIComponent(q)}`;
+    const pb = url.searchParams.get('pb');
+    if (pb) {
+      const latMatch = pb.match(/!2d(-?\d+\.?\d*)/);
+      const lngMatch = pb.match(/!3d(-?\d+\.?\d*)/);
+      if (latMatch && lngMatch) return `https://www.google.com/maps/@${lngMatch[1]},${latMatch[1]},15z`;
+    }
+  } catch { /* ignore */ }
+  return 'https://www.google.com/maps';
+}
+
 function buildGoogleEmbedHtml(src: string, height: number): string {
+  const openLink = googleEmbedToMapsUrl(src);
   return `<div class="map-container">`
     + `<div class="map-iframe-wrap">`
     + `<iframe class="map-iframe" src="${escapeAttr(src)}" style="height:${height}px;" loading="lazy" referrerpolicy="no-referrer" allowfullscreen></iframe>`
     + `</div>`
     + `<div class="map-footer">`
-    + `<a href="${escapeAttr(src)}" target="_blank" rel="noopener" class="map-open-label">Open in Maps ↗</a>`
+    + `<a href="${escapeAttr(openLink)}" target="_blank" rel="noopener" class="map-open-label">Open in Maps ↗</a>`
     + `</div></div>`;
 }
 
