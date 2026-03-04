@@ -152,3 +152,18 @@ select.form-input {
   border-color: var(--accent);
   color: #fff;
 }
+
+.suggested-fields {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.card-detail.suggested-tbd {
+  opacity: 0.45;
+  font-style: italic;
+}
+
+.badge-suggested {
+  background: var(--text-tertiary)20;
+  color: var(--text-tertiary);
+}

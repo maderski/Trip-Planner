@@ -10,4 +10,5 @@ export interface Accommodation {
   link: string;
   confirmationCode: string;
   notes: string;
+  suggested?: boolean;
 }

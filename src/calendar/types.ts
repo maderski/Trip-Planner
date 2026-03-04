@@ -8,4 +8,5 @@ export interface CalendarEvent {
   location: string;
   mapLink: string;
   photos: string[];
+  suggested?: boolean;
 }

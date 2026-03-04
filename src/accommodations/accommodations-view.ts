@@ -54,7 +54,9 @@ export function renderAccommodations(container: HTMLElement): void {
       groupStays.forEach((acc) => {
         const bodyParts: string[] = [];
         if (acc.checkIn && acc.checkOut) {
-          bodyParts.push(`<div class="card-detail">${icons.calendar} ${formatDateRange(acc.checkIn, acc.checkOut)}</div>`);
+          const dateText = acc.suggested ? 'TBD' : formatDateRange(acc.checkIn, acc.checkOut);
+          const tbdClass = acc.suggested ? ' suggested-tbd' : '';
+          bodyParts.push(`<div class="card-detail${tbdClass}">${icons.calendar} ${dateText}</div>`);
         }
         if (acc.address) {
           bodyParts.push(`<div class="card-detail">${icons.mapPin} <a href="https://maps.google.com/?q=${encodeURIComponent(acc.address)}" target="_blank" rel="noopener">${escapeHtml(acc.address)}</a></div>`);
@@ -69,10 +71,11 @@ export function renderAccommodations(container: HTMLElement): void {
           bodyParts.push(`<div style="margin-top: 4px;">${escapeHtml(acc.notes)}</div>`);
         }
 
+        const suggestedBadgeHtml = acc.suggested ? '<span class="badge badge-suggested" style="margin-bottom: 4px;">Suggested</span> ' : '';
         const card = createCard({
           title: acc.name,
           badge: { label: acc.type, color: typeColors[acc.type] },
-          body: bodyParts.join(''),
+          body: suggestedBadgeHtml + bodyParts.join(''),
           actions: [
             { icon: icons.edit, label: 'Edit', onClick: () => openAccModal(container, acc) },
             { icon: icons.trash, label: 'Delete', danger: true, onClick: () => deleteAcc(container, acc.id) },
@@ -105,7 +108,13 @@ export function openAccModal(container: HTMLElement, acc: Accommodation | null, 
         ${types.map((t) => `<option value="${t}"${acc?.type === t ? ' selected' : ''}>${t}</option>`).join('')}
       </select>
     </div>
-    <div class="form-row">
+    <div class="form-group">
+      <label class="checkbox-label">
+        <input type="checkbox" name="suggested" ${acc?.suggested ? 'checked' : ''} />
+        Suggested (Dates TBD)
+      </label>
+    </div>
+    <div class="form-row date-time-fields"${acc?.suggested ? ' style="opacity:0.4;pointer-events:none"' : ''}>
       <div class="form-group">
         <label class="form-label">Check-in</label>
         <input class="form-input" type="date" name="checkIn" value="${acc?.checkIn || ''}" />
@@ -145,6 +154,7 @@ export function openAccModal(container: HTMLElement, acc: Accommodation | null, 
         link: fd.get('link') as string,
         confirmationCode: fd.get('confirmationCode') as string,
         notes: fd.get('notes') as string,
+        suggested: form.querySelector<HTMLInputElement>('input[name="suggested"]')!.checked,
       };
 
       if (isEdit) {
@@ -158,6 +168,15 @@ export function openAccModal(container: HTMLElement, acc: Accommodation | null, 
       onSave ? onSave() : renderAccommodations(container);
     }
   );
+
+  // Wire up suggested checkbox to toggle date field visibility
+  const overlay = document.querySelector('.modal-overlay')!;
+  const suggestedCb = overlay.querySelector<HTMLInputElement>('input[name="suggested"]')!;
+  const dateTimeFields = overlay.querySelector<HTMLElement>('.date-time-fields')!;
+  suggestedCb.addEventListener('change', () => {
+    dateTimeFields.style.opacity = suggestedCb.checked ? '0.4' : '';
+    dateTimeFields.style.pointerEvents = suggestedCb.checked ? 'none' : '';
+  });
 }
 
 function deleteAcc(container: HTMLElement, id: string): void {

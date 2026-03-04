@@ -15,4 +15,5 @@ export interface Restaurant {
   visited: boolean;
   mapLink: string;
   photos: string[];
+  suggested?: boolean;
 }

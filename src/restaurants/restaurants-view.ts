@@ -94,6 +94,7 @@ export function renderRestaurants(container: HTMLElement): void {
         card.className = `glass-card item-card${rest.visited ? ' dimmed' : ''}`;
 
         const badgeColor = mealColors[rest.mealType];
+        const suggestedBadge = rest.suggested ? ' <span class="badge badge-suggested">Suggested</span>' : '';
         const bodyParts: string[] = [];
 
         if (rest.priceRange) {
@@ -108,8 +109,10 @@ export function renderRestaurants(container: HTMLElement): void {
         if (rest.menuLink) {
           bodyParts.push(`<div class="card-detail">${icons.menu} <a href="${escapeAttr(rest.menuLink)}" target="_blank" rel="noopener">Menu</a></div>`);
         }
-        if (rest.visitDate) {
-          bodyParts.push(`<div class="card-detail">${icons.calendar} <span>${formatDate(rest.visitDate)}</span></div>`);
+        if (rest.visitDate || rest.suggested) {
+          const dateText = rest.suggested ? 'TBD' : formatDate(rest.visitDate!);
+          const tbdClass = rest.suggested ? ' suggested-tbd' : '';
+          bodyParts.push(`<div class="card-detail${tbdClass}">${icons.calendar} <span>${dateText}</span></div>`);
         }
         if (rest.notes) {
           bodyParts.push(`<div style="margin-top: 4px;">${escapeHtml(rest.notes)}</div>`);
@@ -123,7 +126,7 @@ export function renderRestaurants(container: HTMLElement): void {
             <div class="card-header-text">
               <div class="card-title-row">
                 <h3 class="card-title">${escapeHtml(rest.name)}</h3>
-                <span class="badge" style="background: ${badgeColor}20; color: ${badgeColor}">${rest.mealType}</span>
+                <span class="badge" style="background: ${badgeColor}20; color: ${badgeColor}">${rest.mealType}</span>${suggestedBadge}
               </div>
             </div>
             <div class="card-actions">
@@ -198,6 +201,12 @@ export function openRestModal(container: HTMLElement, rest: Restaurant | null, o
       <label class="form-label">Name</label>
       <input class="form-input" name="name" value="${escapeAttr(rest?.name || '')}" placeholder="Restaurant name" required />
     </div>
+    <div class="form-group">
+      <label class="checkbox-label">
+        <input type="checkbox" name="suggested" ${rest?.suggested ? 'checked' : ''} />
+        Suggested (Date TBD)
+      </label>
+    </div>
     <div class="form-row">
       <div class="form-group">
         <label class="form-label">Meal Type</label>
@@ -229,7 +238,7 @@ export function openRestModal(container: HTMLElement, rest: Restaurant | null, o
       <label class="form-label">Menu Link</label>
       <input class="form-input" type="url" name="menuLink" value="${escapeAttr(rest?.menuLink || '')}" placeholder="https://..." />
     </div>
-    <div class="form-group">
+    <div class="form-group date-time-fields"${rest?.suggested ? ' style="opacity:0.4;pointer-events:none"' : ''}>
       <label class="form-label">Visit Date</label>
       <input class="form-input" type="date" name="visitDate" value="${rest?.visitDate || ''}" />
       <span class="form-hint">Pins this restaurant to a day on the calendar</span>
@@ -256,6 +265,7 @@ export function openRestModal(container: HTMLElement, rest: Restaurant | null, o
         notes: fd.get('notes') as string,
         visited: rest?.visited || false,
         photos: rest?.photos || [],
+        suggested: form.querySelector<HTMLInputElement>('input[name="suggested"]')!.checked,
       };
 
       if (isEdit) {
@@ -269,6 +279,15 @@ export function openRestModal(container: HTMLElement, rest: Restaurant | null, o
       onSave ? onSave() : renderRestaurants(container);
     }
   );
+
+  // Wire up suggested checkbox to toggle date field visibility
+  const overlay = document.querySelector('.modal-overlay')!;
+  const suggestedCb = overlay.querySelector<HTMLInputElement>('input[name="suggested"]')!;
+  const dateTimeFields = overlay.querySelector<HTMLElement>('.date-time-fields')!;
+  suggestedCb.addEventListener('change', () => {
+    dateTimeFields.style.opacity = suggestedCb.checked ? '0.4' : '';
+    dateTimeFields.style.pointerEvents = suggestedCb.checked ? 'none' : '';
+  });
 }
 
 function deleteRest(container: HTMLElement, id: string): void {

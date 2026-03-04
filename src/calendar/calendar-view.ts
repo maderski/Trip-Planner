@@ -89,12 +89,18 @@ export function renderCalendar(container: HTMLElement): void {
 
       card.className = 'glass-card item-card calendar-event-card';
       card.dataset.id = ev.id;
+      const suggestedBadge = ev.suggested ? '<span class="badge badge-suggested">Suggested</span>' : '';
+      const multiDayBadge = ev.endDate && ev.endDate !== ev.date ? '<span class="badge" style="background: var(--accent-glow); color: var(--accent-light)">Multi-day</span>' : '';
+      const displayDate = ev.suggested ? 'TBD' : dateLabel;
+      const displayTime = ev.suggested ? 'TBD' : (ev.time ? formatTime(ev.time) : '');
+      const tbdClass = ev.suggested ? ' suggested-tbd' : '';
       card.innerHTML = `
         <div class="card-header">
           <div class="card-header-text">
             <div class="card-title-row">
               <h3 class="card-title">${escapeHtml(ev.title)}</h3>
-              ${ev.endDate && ev.endDate !== ev.date ? '<span class="badge" style="background: var(--accent-glow); color: var(--accent-light)">Multi-day</span>' : ''}
+              ${suggestedBadge}
+              ${multiDayBadge}
             </div>
           </div>
           <div class="card-actions">
@@ -103,8 +109,8 @@ export function renderCalendar(container: HTMLElement): void {
           </div>
         </div>
         <div class="card-body">
-          <div class="card-detail">${icons.calendar} ${dateLabel}</div>
-          ${ev.time ? `<div class="card-detail">${icons.clock} ${formatTime(ev.time)}</div>` : ''}
+          <div class="card-detail${tbdClass}">${icons.calendar} ${displayDate}</div>
+          ${displayTime ? `<div class="card-detail${tbdClass}">${icons.clock} ${displayTime}</div>` : ''}
           ${ev.location ? `<div class="card-detail">${icons.mapPin} ${escapeHtml(ev.location)}</div>` : ''}
           ${ev.description ? `<div style="margin-top: 4px;">${escapeHtml(ev.description)}</div>` : ''}
           ${mapHtml}
@@ -162,7 +168,13 @@ export function openEventModal(container: HTMLElement, event: CalendarEvent | nu
       <label class="form-label">Title</label>
       <input class="form-input" name="title" value="${escapeAttr(event?.title || '')}" placeholder="Event name" required />
     </div>
-    <div class="form-row">
+    <div class="form-group">
+      <label class="checkbox-label">
+        <input type="checkbox" name="suggested" ${event?.suggested ? 'checked' : ''} />
+        Suggested (Date & Time TBD)
+      </label>
+    </div>
+    <div class="form-row date-time-fields"${event?.suggested ? ' style="opacity:0.4;pointer-events:none"' : ''}>
       <div class="form-group">
         <label class="form-label">Date</label>
         <input class="form-input" type="date" name="date" value="${event?.date || toDateString(new Date())}" required />
@@ -199,6 +211,7 @@ export function openEventModal(container: HTMLElement, event: CalendarEvent | nu
         mapLink: fd.get('mapLink') as string,
         description: fd.get('description') as string,
         photos: event?.photos || [],
+        suggested: form.querySelector<HTMLInputElement>('input[name="suggested"]')!.checked,
       };
 
       if (isEdit) {
@@ -212,6 +225,15 @@ export function openEventModal(container: HTMLElement, event: CalendarEvent | nu
       onSave ? onSave() : renderCalendar(container);
     }
   );
+
+  // Wire up suggested checkbox to toggle date/time field visibility
+  const overlay = document.querySelector('.modal-overlay')!;
+  const suggestedCb = overlay.querySelector<HTMLInputElement>('input[name="suggested"]')!;
+  const dateTimeFields = overlay.querySelector<HTMLElement>('.date-time-fields')!;
+  suggestedCb.addEventListener('change', () => {
+    dateTimeFields.style.opacity = suggestedCb.checked ? '0.4' : '';
+    dateTimeFields.style.pointerEvents = suggestedCb.checked ? 'none' : '';
+  });
 }
 
 function escapeHtml(str: string): string {
