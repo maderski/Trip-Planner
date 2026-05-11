@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  base: '/Trip-Planner/',
+  base: '/',
   build: { outDir: 'dist' },
 });

@@ -1,6 +1,8 @@
 import { icons } from '../utils/icons.ts';
 
-export function openModal(title: string, contentHtml: string, onSubmit?: (form: HTMLFormElement) => void): void {
+type ModalSubmitResult = void | boolean | Promise<void | boolean>;
+
+export function openModal(title: string, contentHtml: string, onSubmit?: (form: HTMLFormElement) => ModalSubmitResult): void {
   const existing = document.querySelector('.modal-overlay');
   if (existing) existing.remove();
 
@@ -35,10 +37,12 @@ export function openModal(title: string, contentHtml: string, onSubmit?: (form: 
 
   if (onSubmit) {
     const form = overlay.querySelector('form')!;
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      onSubmit(form);
-      close();
+      const shouldClose = await onSubmit(form);
+      if (shouldClose !== false) {
+        close();
+      }
     });
   }
 

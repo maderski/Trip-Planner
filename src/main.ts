@@ -1,4 +1,4 @@
-import { isSessionValid, initTheme, getAllTrips, getActiveTripId, setActiveTripId, createTrip, deleteTrip } from './shared/storage.ts';
+import { isSessionValid, initTheme, getAllTrips, getActiveTripId, setActiveTripId, createTrip, deleteTrip, getPasscode } from './shared/storage.ts';
 import { initRouter, navigateTo, getCurrentRoute, type Route } from './shared/router.ts';
 import { createTabBar, rebuildTripSelector, updateTabBar } from './shared/components/tab-bar.ts';
 import { icons } from './shared/utils/icons.ts';
@@ -8,6 +8,7 @@ import { renderCalendar } from './calendar/calendar-view.ts';
 import { renderAccommodations } from './accommodations/accommodations-view.ts';
 import { renderRestaurants } from './restaurants/restaurants-view.ts';
 import { renderSettings } from './settings/settings-view.ts';
+import { isSyncEnabled, startListening } from './shared/sync.ts';
 import './shared/styles/main.css';
 
 initTheme();
@@ -34,6 +35,14 @@ function startApp(): void {
   };
 
   initRouter(renderCurrentView);
+
+  // Start real-time sync if returning to an already-authenticated session
+  const passcode = getPasscode();
+  if (isSyncEnabled() && passcode) {
+    void startListening(passcode, () => {
+      document.dispatchEvent(new CustomEvent('trip-changed'));
+    });
+  }
 
   document.addEventListener('trip-changed', () => {
     renderCurrentView(getCurrentRoute());

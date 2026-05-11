@@ -4,6 +4,84 @@
   gap: var(--space-sm);
 }
 
+.settings-collab {
+  padding: var(--space-md);
+}
+
+.settings-collab-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.settings-collab-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.settings-status-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 6px 10px;
+  border-radius: var(--radius-full);
+  font-size: var(--font-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.settings-status-synced {
+  background: rgba(52, 211, 153, 0.14);
+  color: #34d399;
+}
+
+.settings-status-syncing,
+.settings-status-idle {
+  background: rgba(96, 165, 250, 0.14);
+  color: #60a5fa;
+}
+
+.settings-status-error,
+.settings-status-disabled {
+  background: rgba(248, 113, 113, 0.14);
+  color: #f87171;
+}
+
+.settings-collab-note {
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.settings-passcode-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding-top: var(--space-xs);
+}
+
+.settings-passcode-label {
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+}
+
+.settings-passcode-value {
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.05);
+  font-size: var(--font-sm);
+}
+
+.settings-modal-note {
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
 .settings-item {
   display: flex;
   align-items: center;

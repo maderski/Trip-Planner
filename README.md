@@ -1,8 +1,6 @@
 # Trip Planner
 
-A mobile-first trip planning app built with vanilla TypeScript and Vite. Everything is stored locally in the browser — no account, no backend, no tracking.
-
-**Live site:** https://maderski.github.io/Trip-Planner/
+A mobile-first trip planning app built with vanilla TypeScript and Vite. It can run fully locally, or use Firebase Hosting and Firestore for shared trip planning.
 
 ## Features
 
@@ -14,7 +12,8 @@ A mobile-first trip planning app built with vanilla TypeScript and Vite. Everyth
 - **Map Previews** — Paste any Google Maps or Apple Maps share link to get an embedded OpenStreetMap preview directly in the card.
 - **Photos** — Attach photos to trips, events, restaurants, and accommodations. Tap to view full-screen.
 - **Dark / Light theme** — Follows system preference; toggle in Settings.
-- **Offline-ready** — All data lives in `localStorage`. No internet required after first load.
+- **Shared Workspace** — Use a passcode-backed workspace to collaborate on the same planner through Firebase.
+- **Offline-ready** — Local storage remains available as a cache and fallback.
 
 ## Tech Stack
 
@@ -23,9 +22,9 @@ A mobile-first trip planning app built with vanilla TypeScript and Vite. Everyth
 | Language | TypeScript 5.9 |
 | Build | Vite 7 |
 | Maps | OpenStreetMap embed iframe |
-| Storage | `localStorage` (no backend) |
+| Storage | `localStorage` + Firestore sync |
 | Styling | CSS custom properties, no framework |
-| Deploy | GitHub Actions → GitHub Pages |
+| Deploy | Firebase Hosting |
 
 ## Getting Started
 
@@ -36,6 +35,8 @@ npm run dev
 
 Open `http://localhost:5173` in your browser.
 
+Copy `.env.example` to `.env.local` and fill in your Firebase web app config to enable shared sync.
+
 ## Scripts
 
 | Command | Description |
@@ -43,6 +44,8 @@ Open `http://localhost:5173` in your browser.
 | `npm run dev` | Start local dev server |
 | `npm run build` | Type-check and build for production |
 | `npm run preview` | Preview the production build locally |
+| `npm run firebase:deploy` | Build and deploy to Firebase Hosting |
+| `npm run firebase:emulators` | Start local Firebase emulators |
 
 ## Project Structure
 
@@ -60,10 +63,13 @@ src/
     └── utils/         # Maps, photos, icons, dates, storage
 ```
 
-## Deployment
+## Firebase Setup
 
-The app is deployed to GitHub Pages via GitHub Actions. Every push to `main` triggers a build and deploy automatically. The workflow requires the repository's Pages source to be set to **"GitHub Actions"** in **Settings → Pages**.
+1. Create a Firebase project and a web app.
+2. Copy the web app config into `.env.local`.
+3. Update `.firebaserc` with your Firebase project ID.
+4. Deploy Firestore rules and Hosting with `npm run firebase:deploy`.
 
 ## Data
 
-All app data is stored as a single JSON object in `localStorage` under the key `trip-planner-data`. You can export a backup or import from a previous backup in **Settings**.
+App data is stored locally under `trip-planner-data` and, when Firebase is configured, synced to Firestore as a shared passcode-backed workspace. You can still export a backup or import from a previous backup in **Settings**.

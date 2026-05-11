@@ -1,11 +1,19 @@
-import { getTheme, setTheme, exportData, importData, clearData, getPasscode, setPasscode } from '../shared/storage.ts';
+import { clearData, exportData, getPasscode, importData, setPasscode } from '../shared/storage.ts';
+import { getTheme, setTheme } from '../shared/storage.ts';
 import { openModal, openConfirmModal } from '../shared/components/modal.ts';
 import { showToast } from '../shared/components/toast.ts';
+import { isValidPasscode, MAX_PASSCODE_LENGTH, MIN_PASSCODE_LENGTH, normalizePasscode } from '../shared/passcode.ts';
+import { getSyncState, isSyncEnabled, pushToCloud, startListening, type SyncStatus } from '../shared/sync.ts';
+import type { AppData } from '../shared/types.ts';
 import { icons } from '../shared/utils/icons.ts';
 import './settings.css';
 
 export function renderSettings(container: HTMLElement): void {
   const isDark = getTheme() === 'dark';
+  const passcode = getPasscode();
+  const syncState = getSyncState();
+  const syncEnabled = isSyncEnabled();
+  const statusMeta = getStatusMeta(syncState.status);
 
   container.innerHTML = `
     <div class="view">
@@ -14,6 +22,28 @@ export function renderSettings(container: HTMLElement): void {
       </div>
 
       <div class="settings-list">
+        <div class="settings-collab glass-card">
+          <div class="settings-collab-header">
+            <div class="settings-item-icon">${statusMeta.icon}</div>
+            <div class="settings-item-text">
+              <h3>Shared Workspace</h3>
+              <p>${statusMeta.label}</p>
+            </div>
+          </div>
+          <div class="settings-collab-details">
+            <div class="settings-status-badge settings-status-${syncState.status}">${statusMeta.badge}</div>
+            <p class="settings-collab-note">${syncState.detail}</p>
+            <p class="settings-collab-note">${syncEnabled
+              ? 'Anyone with this passcode joins the same trip planner. Collaboration uses last-write-wins syncing.'
+              : 'Add Firebase config values to enable cloud sync. Until then, this browser stores data locally only.'}</p>
+            <div class="settings-passcode-row">
+              <span class="settings-passcode-label">Workspace passcode</span>
+              <code class="settings-passcode-value">${escapeHtml(passcode || 'Not set')}</code>
+            </div>
+            ${syncState.lastSyncedAt ? `<p class="settings-collab-note">Last synced: ${new Date(syncState.lastSyncedAt).toLocaleString()}</p>` : ''}
+          </div>
+        </div>
+
         <div class="settings-item glass-card">
           <div class="settings-item-info">
             <div class="settings-item-icon">${isDark ? icons.moon : icons.sun}</div>
@@ -84,35 +114,56 @@ export function renderSettings(container: HTMLElement): void {
     openModal(
       'Change Passcode',
       `
+      <p class="settings-modal-note">Changing the passcode creates a new shared workspace for future syncs. Share the new passcode with collaborators.</p>
       <div class="form-group">
         <label class="form-label">Current Passcode</label>
         <input class="form-input" type="password" name="current" required />
       </div>
       <div class="form-group">
         <label class="form-label">New Passcode</label>
-        <input class="form-input" type="password" name="newPass" minlength="4" maxlength="16" required />
+        <input class="form-input" type="password" name="newPass" minlength="${MIN_PASSCODE_LENGTH}" maxlength="${MAX_PASSCODE_LENGTH}" required />
       </div>
       <div class="form-group">
         <label class="form-label">Confirm New Passcode</label>
-        <input class="form-input" type="password" name="confirm" minlength="4" maxlength="16" required />
+        <input class="form-input" type="password" name="confirm" minlength="${MIN_PASSCODE_LENGTH}" maxlength="${MAX_PASSCODE_LENGTH}" required />
       </div>
       `,
-      (form) => {
+      async (form) => {
         const fd = new FormData(form);
-        const current = fd.get('current') as string;
-        const newPass = fd.get('newPass') as string;
-        const confirm = fd.get('confirm') as string;
+        const current = normalizePasscode(fd.get('current') as string);
+        const newPass = normalizePasscode(fd.get('newPass') as string);
+        const confirm = normalizePasscode(fd.get('confirm') as string);
 
         if (current !== getPasscode()) {
           showToast('Current passcode is incorrect', 'error');
-          return;
+          return false;
+        }
+        if (!isValidPasscode(newPass)) {
+          showToast(`Passcodes must be ${MIN_PASSCODE_LENGTH}-${MAX_PASSCODE_LENGTH} characters`, 'error');
+          return false;
         }
         if (newPass !== confirm) {
           showToast('New passcodes do not match', 'error');
-          return;
+          return false;
         }
+
         setPasscode(newPass);
+        if (isSyncEnabled()) {
+          const appData = JSON.parse(exportData()) as AppData;
+          const pushed = await pushToCloud(newPass, appData);
+          if (pushed) {
+            await startListening(newPass, () => {
+              document.dispatchEvent(new CustomEvent('trip-changed'));
+            });
+          } else {
+            showToast('Passcode updated locally, but cloud sync failed', 'error');
+            renderSettings(container);
+            return true;
+          }
+        }
         showToast('Passcode updated', 'success');
+        renderSettings(container);
+        return true;
       }
     );
   });
@@ -151,6 +202,7 @@ export function renderSettings(container: HTMLElement): void {
           if (success) {
             showToast('Data imported successfully', 'success');
             renderSettings(container);
+            document.dispatchEvent(new CustomEvent('trip-changed'));
           } else {
             showToast('Invalid backup file', 'error');
           }
@@ -176,6 +228,7 @@ export function renderSettings(container: HTMLElement): void {
             clearData();
             showToast('All data cleared', 'success');
             renderSettings(container);
+            document.dispatchEvent(new CustomEvent('trip-changed'));
           },
           true
         );
@@ -183,4 +236,26 @@ export function renderSettings(container: HTMLElement): void {
       true
     );
   });
+}
+
+function getStatusMeta(status: SyncStatus): { badge: string; icon: string; label: string } {
+  switch (status) {
+    case 'synced':
+      return { badge: 'Synced', icon: icons.check, label: 'Cloud sync is active.' };
+    case 'syncing':
+      return { badge: 'Syncing', icon: icons.clock, label: 'Cloud sync is in progress.' };
+    case 'error':
+      return { badge: 'Sync Error', icon: icons.alertTriangle, label: 'Cloud sync needs attention.' };
+    case 'idle':
+      return { badge: 'Ready', icon: icons.lock, label: 'Cloud sync is connected and waiting for changes.' };
+    case 'disabled':
+    default:
+      return { badge: 'Local Only', icon: icons.alertTriangle, label: 'Firebase is not configured.' };
+  }
+}
+
+function escapeHtml(str: string): string {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
 }

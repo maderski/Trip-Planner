@@ -1,4 +1,6 @@
 import type { AppData, TripData } from './types.ts';
+import { normalizePasscode } from './passcode.ts';
+import { isSyncEnabled, pushToCloud } from './sync.ts';
 
 const DATA_KEY = 'trip-planner-data';
 const PASSCODE_KEY = 'trip-planner-passcode';
@@ -85,8 +87,16 @@ function migrateIfNeeded(raw: unknown): { app: AppData; migrated: boolean } {
   return { app: defaultAppData(), migrated: true };
 }
 
-function saveAppData(app: AppData): void {
+function writeAppData(app: AppData, syncToCloud: boolean): void {
   localStorage.setItem(DATA_KEY, JSON.stringify(app));
+  if (syncToCloud && isSyncEnabled()) {
+    const passcode = getPasscode();
+    if (passcode) void pushToCloud(passcode, app);
+  }
+}
+
+export function replaceAppData(app: AppData, options: { syncToCloud?: boolean } = {}): void {
+  writeAppData(app, options.syncToCloud ?? false);
 }
 
 function loadAppData(): AppData {
@@ -94,17 +104,17 @@ function loadAppData(): AppData {
     const raw = localStorage.getItem(DATA_KEY);
     if (!raw) {
       const app = defaultAppData();
-      saveAppData(app);
+      writeAppData(app, false);
       return app;
     }
 
     const parsed = JSON.parse(raw) as unknown;
     const { app, migrated } = migrateIfNeeded(parsed);
-    if (migrated) saveAppData(app);
+    if (migrated) writeAppData(app, false);
     return app;
   } catch {
     const app = defaultAppData();
-    saveAppData(app);
+    writeAppData(app, false);
     return app;
   }
 }
@@ -126,7 +136,7 @@ export function saveData(data: TripData): void {
     app.activeTripId = app.trips[app.trips.length - 1].id;
   }
 
-  saveAppData(app);
+  writeAppData(app, true);
 }
 
 export function getAllTrips(): TripData[] {
@@ -141,7 +151,7 @@ export function setActiveTripId(id: string): void {
   const app = loadAppData();
   if (!app.trips.some((trip) => trip.id === id)) return;
   app.activeTripId = id;
-  saveAppData(app);
+  writeAppData(app, true);
 }
 
 export function createTrip(): TripData {
@@ -149,7 +159,7 @@ export function createTrip(): TripData {
   const trip = defaultTripData();
   app.trips.push(trip);
   app.activeTripId = trip.id;
-  saveAppData(app);
+  writeAppData(app, true);
   return trip;
 }
 
@@ -164,11 +174,11 @@ export function deleteTrip(id: string): void {
   if (app.activeTripId === id) {
     app.activeTripId = app.trips[0].id;
   }
-  saveAppData(app);
+  writeAppData(app, true);
 }
 
 export function clearData(): void {
-  localStorage.removeItem(DATA_KEY);
+  writeAppData(defaultAppData(), true);
 }
 
 export function exportData(): string {
@@ -179,7 +189,7 @@ export function importData(json: string): boolean {
   try {
     const parsed = JSON.parse(json) as unknown;
     const { app } = migrateIfNeeded(parsed);
-    saveAppData(app);
+    writeAppData(app, true);
     return true;
   } catch {
     return false;
@@ -187,11 +197,12 @@ export function importData(json: string): boolean {
 }
 
 export function getPasscode(): string | null {
-  return localStorage.getItem(PASSCODE_KEY);
+  const raw = localStorage.getItem(PASSCODE_KEY);
+  return raw ? normalizePasscode(raw) : null;
 }
 
 export function setPasscode(code: string): void {
-  localStorage.setItem(PASSCODE_KEY, code);
+  localStorage.setItem(PASSCODE_KEY, normalizePasscode(code));
 }
 
 export function isSessionValid(): boolean {
